@@ -57,6 +57,11 @@ public class User implements Serializable {
     private Integer creditScore;
 
     /**
+     * 角色  0-用户 9-管理员
+     */
+    private Integer role;
+
+    /**
      * 创建时间
      */
     private Date createTime;

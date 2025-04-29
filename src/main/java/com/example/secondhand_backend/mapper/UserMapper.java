@@ -1,7 +1,8 @@
 package com.example.secondhand_backend.mapper;
 
-import com.example.secondhand_backend.entity.domain.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.secondhand_backend.entity.domain.User;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author 28619
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-04-29 13:42:42
 * @Entity generator.domain.User
 */
+@Mapper
 public interface UserMapper extends BaseMapper<User> {
 
 }

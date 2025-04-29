@@ -1,7 +1,7 @@
 package com.example.secondhand_backend.service;
 
-import com.example.secondhand_backend.entity.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.secondhand_backend.entity.domain.User;
 
 /**
 * @author 28619
@@ -9,5 +9,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2025-04-29 13:42:42
 */
 public interface UserService extends IService<User> {
-
+    User getByUsername(String username);
 }

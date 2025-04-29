@@ -1,47 +1,55 @@
 package com.example.secondhand_backend.utils;
 
+import com.example.secondhand_backend.entity.domain.User;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.http.HttpServletRequest;
 
 @Component
 public class UserUtils {
 
+    private static final ThreadLocal<User> userThreadLocal = new ThreadLocal<>();
+
     /**
-     * 获取当前登录用户ID
-     * @return 用户ID
+     * 设置当前用户
      */
-    public static Long getCurrentUserId() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            return null;
-        }
-        HttpServletRequest request = attributes.getRequest();
-        return (Long) request.getAttribute("userId");
+    public static void setCurrentUser(User user) {
+        userThreadLocal.set(user);
     }
 
     /**
-     * 获取请求IP
-     * @return IP地址
+     * 获取当前用户
      */
-    public static String getIpAddress() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            return null;
-        }
-        HttpServletRequest request = attributes.getRequest();
-        String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
+    public static User getCurrentUser() {
+        return userThreadLocal.get();
     }
-}
+
+    /**
+     * 获取当前用户ID
+     */
+    public static Long getCurrentUserId() {
+        User user = getCurrentUser();
+        return user != null ? user.getId() : null;
+    }
+
+    /**
+     * 获取当前用户角色
+     */
+    public static Integer getCurrentUserRole() {
+        User user = getCurrentUser();
+        return user != null ? user.getRole() : null;
+    }
+
+    /**
+     * 获取当前用户名
+     */
+    public static String getCurrentUsername() {
+        User user = getCurrentUser();
+        return user != null ? user.getUsername() : null;
+    }
+
+    /**
+     * 清除当前用户
+     */
+    public static void clear() {
+        userThreadLocal.remove();
+    }
+} 

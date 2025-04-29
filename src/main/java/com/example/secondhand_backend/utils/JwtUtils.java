@@ -3,11 +3,9 @@ package com.example.secondhand_backend.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,83 +22,64 @@ public class JwtUtils {
     @Value("${jwt.token-prefix}")
     private String tokenPrefix;
 
-    private SecretKey key;
-
-    public JwtUtils() {
-        this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-    }
-
     /**
-     * 生成token
-     * @param userId 用户ID
-     * @return token
+     * 生成JWT令牌
      */
-    public String generateToken(Long userId) {
+    public String generateToken(Long userId, Integer role) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expire * 1000);
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
+        claims.put("role", role);
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expireDate)
-                .signWith(key)
+                .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }
 
     /**
-     * 解析token
-     * @param token token
-     * @return Claims
+     * 从令牌中获取数据声明
      */
-    public Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody();
     }
 
     /**
-     * 获取token中的用户ID
-     * @param token token
-     * @return 用户ID
+     * 从令牌中获取用户ID
      */
-    public Long getUserId(String token) {
-        Claims claims = parseToken(token);
+    public Long getUserIdFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
         return claims.get("userId", Long.class);
     }
 
     /**
-     * 验证token是否过期
-     * @param token token
-     * @return 是否过期
+     * 从令牌中获取用户角色
      */
-    public boolean isExpired(String token) {
-        Claims claims = parseToken(token);
-        return claims.getExpiration().before(new Date());
+    public Integer getRoleFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("role", Integer.class);
     }
 
     /**
-     * 获取带前缀的token
-     * @param token token
-     * @return 带前缀的token
+     * 判断令牌是否过期
      */
-    public String getTokenWithPrefix(String token) {
-        return tokenPrefix + " " + token;
+    public Boolean isTokenExpired(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Date expiration = claims.getExpiration();
+        return expiration.before(new Date());
     }
 
     /**
-     * 移除token前缀
-     * @param token 带前缀的token
-     * @return token
+     * 获取令牌前缀
      */
-    public String removeTokenPrefix(String token) {
-        if (token != null && token.startsWith(tokenPrefix)) {
-            return token.substring(tokenPrefix.length() + 1);
-        }
-        return token;
+    public String getTokenPrefix() {
+        return tokenPrefix;
     }
 } 

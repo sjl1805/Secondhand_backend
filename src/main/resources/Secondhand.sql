@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `phone` VARCHAR(20) COMMENT '手机号',
     `email` VARCHAR(100) COMMENT '邮箱',
     `credit_score` INT DEFAULT 100 COMMENT '信用分',
+    `role` TINYINT(1) DEFAULT 0 COMMENT '角色' 9-管理员 0-用户,
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted` TINYINT(1) DEFAULT 0 COMMENT '是否删除',
@@ -162,10 +163,10 @@ CREATE TABLE IF NOT EXISTS `recommendation` (
 
 -- 插入测试数据
 -- 1. 插入用户数据
-INSERT INTO `user` (`username`, `password`, `nickname`, `avatar`, `phone`, `email`, `credit_score`) VALUES
-('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '张三', '/images/avatars/avatar1.jpg', '13800138001', 'user1@example.com', 100),
-('user2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '李四', '/images/avatars/avatar2.jpg', '13800138002', 'user2@example.com', 95),
-('user3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '王五', '/images/avatars/avatar3.jpg', '13800138003', 'user3@example.com', 90);
+INSERT INTO `user` (`username`, `password`, `nickname`, `avatar`, `phone`, `email`, `credit_score`, `role`) VALUES
+('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '张三', '/images/avatars/avatar1.jpg', '13800138001', 'user1@example.com', 100, 0),
+('user2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '李四', '/images/avatars/avatar2.jpg', '13800138002', 'user2@example.com', 95, 1),
+('user3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '王五', '/images/avatars/avatar3.jpg', '13800138003', 'user3@example.com', 90, 1);
 
 -- 2. 插入地址数据
 INSERT INTO `address` (`user_id`, `receiver_name`, `receiver_phone`, `province`, `city`, `district`, `detail`, `is_default`) VALUES
