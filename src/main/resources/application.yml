@@ -45,15 +45,8 @@ captcha:
 jwt:
   secret: your-secret-key
   expire: 604800            # 7天
-  header: Authorization
+
   token-prefix: Bearer      # Token前缀
-# 跨域配置
-cors:
-  allowed-origins: "*"
-  allowed-methods: "*"
-  allowed-headers: "*"
-  max-age: 3600
-  allow-credentials: true
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
