@@ -1,7 +1,7 @@
 package com.example.secondhand_backend.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.secondhand_backend.entity.domain.Favorite;
+import com.example.secondhand_backend.model.entity.Favorite;
 import com.example.secondhand_backend.service.FavoriteService;
 import com.example.secondhand_backend.mapper.FavoriteMapper;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.example.secondhand_backend.service;
 
-import com.example.secondhand_backend.entity.domain.Category;
+import com.example.secondhand_backend.model.entity.Category;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**

@@ -1,8 +1,8 @@
 package com.example.secondhand_backend.controller;
 
-import com.example.secondhand_backend.dto.AuthResponseDTO;
-import com.example.secondhand_backend.dto.LoginDTO;
-import com.example.secondhand_backend.dto.RegisterDTO;
+import com.example.secondhand_backend.model.dto.AuthResponseDTO;
+import com.example.secondhand_backend.model.dto.LoginDTO;
+import com.example.secondhand_backend.model.dto.RegisterDTO;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.CaptchaUtils;
 import com.example.secondhand_backend.utils.JwtUtils;

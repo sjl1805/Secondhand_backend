@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.secondhand_backend.mapper.AddressMapper">
 
-    <resultMap id="BaseResultMap" type="com.example.secondhand_backend.entity.domain.Address">
+    <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Address">
             <id property="id" column="id" />
             <result property="userId" column="user_id" />
             <result property="receiverName" column="receiver_name" />

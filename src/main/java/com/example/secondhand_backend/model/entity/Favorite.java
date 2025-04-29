@@ -1,4 +1,4 @@
-package com.example.secondhand_backend.entity.domain;
+package com.example.secondhand_backend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -9,32 +9,27 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 商品图片表
- * @TableName product_image
+ * 收藏表
+ * @TableName favorite
  */
-@TableName(value ="product_image")
+@TableName(value ="favorite")
 @Data
-public class ProductImage implements Serializable {
+public class Favorite implements Serializable {
     /**
-     * 图片ID
+     * 收藏ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
+     * 用户ID
+     */
+    private Long userId;
+
+    /**
      * 商品ID
      */
     private Long productId;
-
-    /**
-     * 图片URL
-     */
-    private String imageUrl;
-
-    /**
-     * 排序
-     */
-    private Integer sort;
 
     /**
      * 创建时间

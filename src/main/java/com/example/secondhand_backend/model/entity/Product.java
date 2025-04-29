@@ -1,4 +1,4 @@
-package com.example.secondhand_backend.entity.domain;
+package com.example.secondhand_backend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

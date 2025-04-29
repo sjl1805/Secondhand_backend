@@ -1,6 +1,6 @@
 package com.example.secondhand_backend.mapper;
 
-import com.example.secondhand_backend.entity.domain.Product;
+import com.example.secondhand_backend.model.entity.Product;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

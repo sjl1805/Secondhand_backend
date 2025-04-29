@@ -1,6 +1,6 @@
 package com.example.secondhand_backend.utils;
 
-import com.example.secondhand_backend.entity.domain.User;
+import com.example.secondhand_backend.model.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,7 +1,7 @@
 package com.example.secondhand_backend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.secondhand_backend.entity.domain.User;
+import com.example.secondhand_backend.model.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

@@ -1,7 +1,7 @@
 package com.example.secondhand_backend.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.secondhand_backend.entity.domain.Recommendation;
+import com.example.secondhand_backend.model.entity.Recommendation;
 import com.example.secondhand_backend.service.RecommendationService;
 import com.example.secondhand_backend.mapper.RecommendationMapper;
 import org.springframework.stereotype.Service;

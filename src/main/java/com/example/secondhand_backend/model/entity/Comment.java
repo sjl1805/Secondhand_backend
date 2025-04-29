@@ -1,4 +1,4 @@
-package com.example.secondhand_backend.entity.domain;
+package com.example.secondhand_backend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -9,67 +9,47 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 用户表
- * @TableName user
+ * 评价表
+ * @TableName comment
  */
-@TableName(value ="user")
+@TableName(value ="comment")
 @Data
-public class User implements Serializable {
+public class Comment implements Serializable {
     /**
-     * 用户ID
+     * 评价ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户名
+     * 订单ID
      */
-    private String username;
+    private Long orderId;
 
     /**
-     * 密码
+     * 评价用户ID
      */
-    private String password;
+    private Long userId;
 
     /**
-     * 昵称
+     * 商品ID
      */
-    private String nickname;
+    private Long productId;
 
     /**
-     * 头像URL
+     * 评价内容
      */
-    private String avatar;
+    private String content;
 
     /**
-     * 手机号
+     * 评分：1-5星
      */
-    private String phone;
-
-    /**
-     * 邮箱
-     */
-    private String email;
-
-    /**
-     * 信用分
-     */
-    private Integer creditScore;
-
-    /**
-     * 角色  0-用户 9-管理员
-     */
-    private Integer role;
+    private Integer rating;
 
     /**
      * 创建时间
      */
     private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
 
     /**
      * 是否删除

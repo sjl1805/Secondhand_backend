@@ -2,9 +2,9 @@ package com.example.secondhand_backend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.secondhand_backend.dto.LoginDTO;
-import com.example.secondhand_backend.dto.RegisterDTO;
-import com.example.secondhand_backend.entity.domain.User;
+import com.example.secondhand_backend.model.dto.LoginDTO;
+import com.example.secondhand_backend.model.dto.RegisterDTO;
+import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.exception.BusinessException;
 import com.example.secondhand_backend.mapper.UserMapper;
 import com.example.secondhand_backend.service.UserService;

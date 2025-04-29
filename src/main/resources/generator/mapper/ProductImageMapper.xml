@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.secondhand_backend.mapper.ProductImageMapper">
 
-    <resultMap id="BaseResultMap" type="com.example.secondhand_backend.entity.domain.ProductImage">
+    <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.ProductImage">
             <id property="id" column="id" />
             <result property="productId" column="product_id" />
             <result property="imageUrl" column="image_url" />

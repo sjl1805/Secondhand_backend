@@ -1,7 +1,7 @@
 package com.example.secondhand_backend.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.secondhand_backend.entity.domain.Product;
+import com.example.secondhand_backend.model.entity.Product;
 import com.example.secondhand_backend.service.ProductService;
 import com.example.secondhand_backend.mapper.ProductMapper;
 import org.springframework.stereotype.Service;

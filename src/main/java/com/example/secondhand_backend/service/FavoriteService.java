@@ -1,6 +1,6 @@
 package com.example.secondhand_backend.service;
 
-import com.example.secondhand_backend.entity.domain.Favorite;
+import com.example.secondhand_backend.model.entity.Favorite;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**

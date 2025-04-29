@@ -49,7 +49,7 @@ jwt:
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.example.secondhand_backend.entity.domain
+  type-aliases-package: com.example.secondhand_backend.model.entity
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -1,4 +1,4 @@
-package com.example.secondhand_backend.entity.domain;
+package com.example.secondhand_backend.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -9,14 +9,14 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 收藏表
- * @TableName favorite
+ * 系统通知表
+ * @TableName system_notification
  */
-@TableName(value ="favorite")
+@TableName(value ="system_notification")
 @Data
-public class Favorite implements Serializable {
+public class SystemNotification implements Serializable {
     /**
-     * 收藏ID
+     * 通知ID
      */
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -27,9 +27,14 @@ public class Favorite implements Serializable {
     private Long userId;
 
     /**
-     * 商品ID
+     * 通知内容
      */
-    private Long productId;
+    private String content;
+
+    /**
+     * 是否已读
+     */
+    private Integer isRead;
 
     /**
      * 创建时间
