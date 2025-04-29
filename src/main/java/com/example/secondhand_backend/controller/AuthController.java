@@ -7,6 +7,10 @@ import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.CaptchaUtils;
 import com.example.secondhand_backend.utils.JwtUtils;
 import cn.hutool.captcha.LineCaptcha;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +20,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "认证模块", description = "认证模块")
 public class AuthController {
 
     @Autowired
@@ -31,6 +36,7 @@ public class AuthController {
      * 用户登录
      */
     @PostMapping("/login")
+    @Operation(summary = "用户登录", description = "用户登录")
     public AuthResponseDTO login(@RequestBody @Validated LoginDTO loginDTO) {
         // 验证用户
         var user = userService.login(loginDTO);
@@ -53,6 +59,7 @@ public class AuthController {
      * 用户注册
      */
     @PostMapping("/register")
+    @Operation(summary = "用户注册", description = "用户注册")
     public AuthResponseDTO register(@RequestBody @Validated RegisterDTO registerDTO) {
         // 注册用户
         var user = userService.register(registerDTO);
@@ -76,6 +83,7 @@ public class AuthController {
      * @return 验证码图片和key
      */
     @GetMapping("/captcha")
+    @Operation(summary = "获取验证码", description = "获取验证码")
     public Map<String, String> getCaptcha() {
         // 生成验证码
         LineCaptcha captcha = captchaUtils.generateCaptcha(130, 48, 4, 2);
@@ -85,7 +93,8 @@ public class AuthController {
         
         // 保存验证码到Redis，有效期5分钟
         captchaUtils.saveCaptcha(key, captcha.getCode(), 300);
-        
+        System.out.println(captcha.getCode());
+        System.out.println(key);
         // 返回验证码图片和key
         Map<String, String> result = new HashMap<>();
         result.put("key", key);
