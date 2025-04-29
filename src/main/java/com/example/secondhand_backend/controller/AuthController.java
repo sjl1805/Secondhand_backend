@@ -92,7 +92,8 @@ public class AuthController {
         
         // 生成唯一key
         String key = UUID.randomUUID().toString();
-        
+        System.out.println(key);
+        System.out.println(captcha.getCode());
         // 保存验证码到Redis，有效期5分钟
         captchaUtils.saveCaptcha(key, captcha.getCode(), 300);
         

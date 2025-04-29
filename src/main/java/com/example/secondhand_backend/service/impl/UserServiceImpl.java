@@ -87,15 +87,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserInfoDTO getUserInfo(Long userId) {
+    public User getUserInfo(Long userId) {
         User user = getById(userId);
         if (user == null) {
             throw BusinessException.usernameOrPasswordError();
         }
-
-        UserInfoDTO userInfoDTO = new UserInfoDTO();
-        BeanUtils.copyProperties(user, userInfoDTO);
-        return userInfoDTO;
+        return user;
     }
 
     @Override

@@ -1,7 +1,8 @@
 package com.example.secondhand_backend.controller;
 
 import com.example.secondhand_backend.model.common.Result;
-import com.example.secondhand_backend.model.dto.UserInfoDTO;
+import com.example.secondhand_backend.model.entity.User;
+import com.example.secondhand_backend.model.dto.UserInfoDTO;  
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.UserUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,10 +20,10 @@ public class UserController {
 
     @GetMapping("/info")
     @Operation(summary = "获取用户信息", description = "获取当前登录用户的信息")
-    public Result<UserInfoDTO> getUserInfo() {
+    public Result<User> getUserInfo() {
         Long userId = UserUtils.getCurrentUserId();
-        UserInfoDTO userInfo = userService.getUserInfo(userId);
-        return Result.success(userInfo);
+        User user = userService.getUserInfo(userId);
+        return Result.success(user);
     }
 
     @PutMapping("/info")

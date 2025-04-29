@@ -35,7 +35,7 @@ public interface UserService extends IService<User> {
     /**
      * 获取用户信息
      */
-    UserInfoDTO getUserInfo(Long userId);
+    User getUserInfo(Long userId);
 
     /**
      * 更新用户信息
