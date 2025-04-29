@@ -1,0 +1,96 @@
+package com.example.secondhand_backend.controller;
+
+import com.example.secondhand_backend.dto.AuthResponseDTO;
+import com.example.secondhand_backend.dto.LoginDTO;
+import com.example.secondhand_backend.dto.RegisterDTO;
+import com.example.secondhand_backend.service.UserService;
+import com.example.secondhand_backend.utils.CaptchaUtils;
+import com.example.secondhand_backend.utils.JwtUtils;
+import cn.hutool.captcha.LineCaptcha;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private CaptchaUtils captchaUtils;
+
+    /**
+     * 用户登录
+     */
+    @PostMapping("/login")
+    public AuthResponseDTO login(@RequestBody @Validated LoginDTO loginDTO) {
+        // 验证用户
+        var user = userService.login(loginDTO);
+
+        // 生成token
+        String token = jwtUtils.generateToken(user.getId(), user.getRole());
+
+        // 返回认证信息
+        return new AuthResponseDTO(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getNickname(),
+                user.getAvatar(),
+                user.getRole()
+        );
+    }
+
+    /**
+     * 用户注册
+     */
+    @PostMapping("/register")
+    public AuthResponseDTO register(@RequestBody @Validated RegisterDTO registerDTO) {
+        // 注册用户
+        var user = userService.register(registerDTO);
+
+        // 生成token
+        String token = jwtUtils.generateToken(user.getId(), user.getRole());
+
+        // 返回认证信息
+        return new AuthResponseDTO(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getNickname(),
+                user.getAvatar(),
+                user.getRole()
+        );
+    }
+
+    /**
+     * 获取验证码
+     * @return 验证码图片和key
+     */
+    @GetMapping("/captcha")
+    public Map<String, String> getCaptcha() {
+        // 生成验证码
+        LineCaptcha captcha = captchaUtils.generateCaptcha(130, 48, 4, 2);
+        
+        // 生成唯一key
+        String key = UUID.randomUUID().toString();
+        
+        // 保存验证码到Redis，有效期5分钟
+        captchaUtils.saveCaptcha(key, captcha.getCode(), 300);
+        
+        // 返回验证码图片和key
+        Map<String, String> result = new HashMap<>();
+        result.put("key", key);
+        result.put("image", captcha.getImageBase64());
+        
+        return result;
+    }
+} 
