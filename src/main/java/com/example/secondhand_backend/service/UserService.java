@@ -1,9 +1,9 @@
 package com.example.secondhand_backend.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
-import com.example.secondhand_backend.model.entity.User;
 
 /**
 * @author 28619

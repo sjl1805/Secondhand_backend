@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
+import com.baomidou.mybatisplus.annotation.FieldFill;
 
 /**
  * 系统通知表
@@ -39,6 +40,7 @@ public class SystemNotification implements Serializable {
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
     @TableField(exist = false)

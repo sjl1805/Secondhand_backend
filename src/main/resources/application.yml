@@ -59,13 +59,6 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
       id-type: auto
-  # 分页插件配置
-  pagehelper:
-    helper-dialect: mysql
-    reasonable: true
-    support-methods-arguments: true
-    params: count=countSql
-
 # OpenAPI配置
 springdoc:
   api-docs:

@@ -3,7 +3,8 @@ package com.example.secondhand_backend.model.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableName;   
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
@@ -34,6 +35,7 @@ public class Favorite implements Serializable {
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
     @TableField(exist = false)
