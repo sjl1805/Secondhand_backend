@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
+import com.example.secondhand_backend.model.dto.UserInfoDTO;
 import com.example.secondhand_backend.exception.BusinessException;
 import com.example.secondhand_backend.mapper.UserMapper;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.CaptchaUtils;
 import com.example.secondhand_backend.utils.MD5Utils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,6 +84,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
         return count(wrapper) > 0;
+    }
+
+    @Override
+    public UserInfoDTO getUserInfo(Long userId) {
+        User user = getById(userId);
+        if (user == null) {
+            throw BusinessException.usernameOrPasswordError();
+        }
+
+        UserInfoDTO userInfoDTO = new UserInfoDTO();
+        BeanUtils.copyProperties(user, userInfoDTO);
+        return userInfoDTO;
+    }
+
+    @Override
+    @Transactional
+    public void updateUserInfo(Long userId, UserInfoDTO userInfoDTO) {
+        User user = getById(userId);
+        if (user == null) {
+            throw BusinessException.usernameOrPasswordError();
+        }
+
+        BeanUtils.copyProperties(userInfoDTO, user);
+        updateById(user);
     }
 }
 

@@ -69,3 +69,12 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+# 文件上传配置
+file:
+  upload:
+    path: classpath:static/uploads
+    avatar-path: classpath:static/uploads/avatar
+    access-path: /uploads/**
+    product-path: classpath:static/uploads/product
+    

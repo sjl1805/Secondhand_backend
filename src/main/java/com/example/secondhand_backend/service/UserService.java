@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
+import com.example.secondhand_backend.model.dto.UserInfoDTO;
 
 /**
 * @author 28619
@@ -30,4 +31,14 @@ public interface UserService extends IService<User> {
      * 检查用户名是否已存在
      */
     boolean checkUsernameExists(String username);
+
+    /**
+     * 获取用户信息
+     */
+    UserInfoDTO getUserInfo(Long userId);
+
+    /**
+     * 更新用户信息
+     */
+    void updateUserInfo(Long userId, UserInfoDTO userInfoDTO);
 }
