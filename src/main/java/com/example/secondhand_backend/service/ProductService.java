@@ -6,6 +6,7 @@ import com.example.secondhand_backend.model.entity.Product;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.vo.ProductVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -122,4 +123,56 @@ public interface ProductService extends IService<Product> {
      * @return 删除成功的数量
      */
     int adminBatchDeleteProduct(List<Long> productIds, Long operatorId);
+    
+    /**
+     * 按价格区间查询商品
+     * @param page 页码
+     * @param size 每页数量
+     * @param minPrice 最低价格，可为空
+     * @param maxPrice 最高价格，可为空
+     * @param categoryId 分类ID，可为空
+     * @param keyword 关键词，可为空
+     * @return 商品列表
+     */
+    IPage<ProductVO> getProductsByPriceRange(int page, int size, BigDecimal minPrice, 
+                                          BigDecimal maxPrice, Integer categoryId, String keyword);
+    
+    /**
+     * 获取最新上架商品
+     * @param limit 返回数量限制
+     * @return 商品列表
+     */
+    List<ProductVO> getLatestProducts(int limit);
+    
+    /**
+     * 获取热门商品（基于浏览量）
+     * @param limit 返回数量限制
+     * @return 商品列表
+     */
+    List<ProductVO> getHotProducts(int limit);
+    
+    /**
+     * 获取推荐商品（基于分类）
+     * @param categoryId 分类ID
+     * @param productId 当前商品ID（排除此ID）
+     * @param limit 返回数量限制
+     * @return 商品列表
+     */
+    List<ProductVO> getRecommendProductsByCategory(Integer categoryId, Long productId, int limit);
+    
+    /**
+     * 高级搜索商品
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 关键词，可为空
+     * @param categoryId 分类ID，可为空
+     * @param minPrice 最低价格，可为空
+     * @param maxPrice 最高价格，可为空
+     * @param sortField 排序字段：createTime-创建时间 price-价格 viewCount-浏览次数
+     * @param sortOrder 排序方式：asc-升序 desc-降序
+     * @return 商品列表
+     */
+    IPage<ProductVO> advancedSearchProducts(int page, int size, String keyword, Integer categoryId,
+                                         BigDecimal minPrice, BigDecimal maxPrice, 
+                                         String sortField, String sortOrder);
 }

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -420,6 +421,166 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         voPage.setPages(productPage.getPages());
         
         return voPage;
+    }
+
+    @Override
+    public IPage<ProductVO> getProductsByPriceRange(int page, int size, BigDecimal minPrice, 
+                                                 BigDecimal maxPrice, Integer categoryId, String keyword) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getDeleted, 0)
+                    .eq(Product::getStatus, 1); // 只查询在售商品
+        
+        // 添加价格区间条件
+        if (minPrice != null) {
+            queryWrapper.ge(Product::getPrice, minPrice);
+        }
+        
+        if (maxPrice != null) {
+            queryWrapper.le(Product::getPrice, maxPrice);
+        }
+        
+        // 如果有分类ID，添加分类条件
+        if (categoryId != null && categoryId > 0) {
+            queryWrapper.eq(Product::getCategoryId, categoryId);
+        }
+        
+        // 如果有关键词，添加关键词条件
+        if (StringUtils.hasText(keyword)) {
+            queryWrapper.and(wrapper -> 
+                wrapper.like(Product::getTitle, keyword)
+                      .or()
+                      .like(Product::getDescription, keyword)
+            );
+        }
+        
+        // 按创建时间倒序排序
+        queryWrapper.orderByDesc(Product::getCreateTime);
+        
+        // 分页查询
+        Page<Product> productPage = new Page<>(page, size);
+        Page<Product> resultPage = page(productPage, queryWrapper);
+        
+        // 转换为ProductVO
+        return convertToProductVOPage(resultPage);
+    }
+    
+    @Override
+    public List<ProductVO> getLatestProducts(int limit) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getDeleted, 0)
+                    .eq(Product::getStatus, 1) // 只查询在售商品
+                    .orderByDesc(Product::getCreateTime)
+                    .last("LIMIT " + limit); // 限制返回数量
+        
+        // 查询最新商品
+        List<Product> products = list(queryWrapper);
+        
+        // 转换为ProductVO
+        return products.stream()
+                       .map(product -> convertToProductVO(product, null))
+                       .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<ProductVO> getHotProducts(int limit) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getDeleted, 0)
+                    .eq(Product::getStatus, 1) // 只查询在售商品
+                    .orderByDesc(Product::getViewCount)
+                    .last("LIMIT " + limit); // 限制返回数量
+        
+        // 查询热门商品
+        List<Product> products = list(queryWrapper);
+        
+        // 转换为ProductVO
+        return products.stream()
+                       .map(product -> convertToProductVO(product, null))
+                       .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<ProductVO> getRecommendProductsByCategory(Integer categoryId, Long productId, int limit) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getDeleted, 0)
+                    .eq(Product::getStatus, 1) // 只查询在售商品
+                    .eq(Product::getCategoryId, categoryId)
+                    .ne(productId != null, Product::getId, productId) // 排除当前商品
+                    .orderByDesc(Product::getCreateTime)
+                    .last("LIMIT " + limit); // 限制返回数量
+        
+        // 查询同类商品
+        List<Product> products = list(queryWrapper);
+        
+        // 转换为ProductVO
+        return products.stream()
+                       .map(product -> convertToProductVO(product, null))
+                       .collect(Collectors.toList());
+    }
+    
+    @Override
+    public IPage<ProductVO> advancedSearchProducts(int page, int size, String keyword, Integer categoryId,
+                                                BigDecimal minPrice, BigDecimal maxPrice, 
+                                                String sortField, String sortOrder) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getDeleted, 0)
+                    .eq(Product::getStatus, 1); // 只查询在售商品
+        
+        // 如果有分类ID，添加分类条件
+        if (categoryId != null && categoryId > 0) {
+            queryWrapper.eq(Product::getCategoryId, categoryId);
+        }
+        
+        // 如果有价格区间，添加价格条件
+        if (minPrice != null) {
+            queryWrapper.ge(Product::getPrice, minPrice);
+        }
+        
+        if (maxPrice != null) {
+            queryWrapper.le(Product::getPrice, maxPrice);
+        }
+        
+        // 如果有关键词，添加关键词条件
+        if (StringUtils.hasText(keyword)) {
+            queryWrapper.and(wrapper -> 
+                wrapper.like(Product::getTitle, keyword)
+                      .or()
+                      .like(Product::getDescription, keyword)
+            );
+        }
+        
+        // 添加排序条件
+        if ("price".equals(sortField)) {
+            if ("asc".equals(sortOrder)) {
+                queryWrapper.orderByAsc(Product::getPrice);
+            } else {
+                queryWrapper.orderByDesc(Product::getPrice);
+            }
+        } else if ("viewCount".equals(sortField)) {
+            if ("asc".equals(sortOrder)) {
+                queryWrapper.orderByAsc(Product::getViewCount);
+            } else {
+                queryWrapper.orderByDesc(Product::getViewCount);
+            }
+        } else {
+            // 默认按创建时间排序
+            if ("asc".equals(sortOrder)) {
+                queryWrapper.orderByAsc(Product::getCreateTime);
+            } else {
+                queryWrapper.orderByDesc(Product::getCreateTime);
+            }
+        }
+        
+        // 分页查询
+        Page<Product> productPage = new Page<>(page, size);
+        Page<Product> resultPage = page(productPage, queryWrapper);
+        
+        // 转换为ProductVO
+        return convertToProductVOPage(resultPage);
     }
 }
 
