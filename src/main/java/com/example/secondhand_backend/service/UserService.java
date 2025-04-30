@@ -1,10 +1,13 @@
 package com.example.secondhand_backend.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
 import com.example.secondhand_backend.model.dto.UserInfoDTO;
+
+import java.util.List;
 
 /**
 * @author 28619
@@ -41,4 +44,50 @@ public interface UserService extends IService<User> {
      * 更新用户信息
      */
     void updateUserInfo(Long userId, UserInfoDTO userInfoDTO);
+    
+    /**
+     * 管理员分页查询用户列表
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词（用户名、昵称、手机号、邮箱）
+     * @return 用户分页列表
+     */
+    IPage<User> getUserList(int page, int size, String keyword);
+    
+    /**
+     * 管理员修改用户状态
+     * @param userId 用户ID
+     * @param creditScore 信用分
+     * @param role 角色（0-普通用户，9-管理员）
+     * @param operatorId 操作者ID（必须是管理员）
+     */
+    void updateUserStatus(Long userId, Integer creditScore, Integer role, Long operatorId);
+    
+    /**
+     * 管理员删除用户（逻辑删除）
+     * @param userId 用户ID
+     * @param operatorId 操作者ID（必须是管理员）
+     */
+    void deleteUser(Long userId, Long operatorId);
+    
+    /**
+     * 管理员重置用户密码
+     * @param userId 用户ID
+     * @param newPassword 新密码
+     * @param operatorId 操作者ID（必须是管理员）
+     */
+    void resetUserPassword(Long userId, String newPassword, Long operatorId);
+    
+    /**
+     * 获取管理员列表
+     * @return 管理员用户列表
+     */
+    List<User> getAdminList();
+    
+    /**
+     * 检查用户是否为管理员
+     * @param userId 用户ID
+     * @return 是否为管理员
+     */
+    boolean isAdmin(Long userId);
 }
