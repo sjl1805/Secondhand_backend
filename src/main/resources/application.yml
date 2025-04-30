@@ -13,9 +13,6 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-  web:
-    resources:
-      static-locations: classpath:/static/
   # Redis配置
   redis:
     host: localhost
@@ -29,6 +26,23 @@ spring:
         max-wait: -1
         max-idle: 8
         min-idle: 0
+  # 静态资源访问配置
+  mvc:
+    static-path-pattern: /static/**
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+# 文件上传配置
+file:
+  upload:
+    path: ./uploads/  # 上传根目录
+    avatar-path: avatar/  # 头像子目录
+    product-path: products/  # 商品图片子目录
+    allowed-types: jpg,jpeg,png,gif  # 允许的文件类型
+    max-size: 10  # 最大文件大小(MB)
+    domain: http://localhost:8080  # 访问域名
+    access-pattern: /static/images/**  # 访问路径模式
 
 # 验证码配置
 captcha:
@@ -70,11 +84,3 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
-# 文件上传配置
-file:
-  upload:
-    path: classpath:static/uploads
-    avatar-path: classpath:static/uploads/avatar
-    access-path: /uploads/**
-    product-path: classpath:static/uploads/product
-    

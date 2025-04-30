@@ -9,6 +9,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.File;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -48,6 +50,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/uploads/**",
                         "/uploads/avatar/**",
                         "/uploads/product/**",
+                        "/static/**",
+                        "/static/images/**",
                         
                         // Swagger和API文档
                         "/swagger-ui/**",
@@ -71,21 +75,19 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 通用上传文件访问路径
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("classpath:/static/uploads/");
-        
-        // 头像文件访问路径
-        registry.addResourceHandler("/uploads/avatar/**")
-                .addResourceLocations("classpath:/static/uploads/avatar/");
-        
-        // 商品图片访问路径
-        registry.addResourceHandler("/uploads/product/**")
-                .addResourceLocations("classpath:/static/uploads/product/");
-        
         // Swagger UI资源
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
+                .resourceChain(false);
+                
+        // 静态资源和上传文件
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/")
+                .resourceChain(false);
+                
+        // 确保能够访问上传的文件
+        registry.addResourceHandler("/static/images/**")
+                .addResourceLocations("classpath:/static/images/")
                 .resourceChain(false);
     }
 } 
