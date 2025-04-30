@@ -78,6 +78,16 @@ public class FileUtil {
         String relativePath = "images/" + subDir + "/" + fileName;
         
         // 创建目录
+        Path staticDir = Paths.get("static");
+        if (!Files.exists(staticDir)) {
+            Files.createDirectories(staticDir);
+        }
+        
+        Path imagesDir = Paths.get("static/images");
+        if (!Files.exists(imagesDir)) {
+            Files.createDirectories(imagesDir);
+        }
+        
         String dir = "static/images/" + subDir + "/";
         Path targetDir = Paths.get(dir);
         if (!Files.exists(targetDir)) {
@@ -86,6 +96,7 @@ public class FileUtil {
         
         // 保存文件
         Path targetPath = Paths.get(dir + fileName);
+        Files.createDirectories(targetPath.getParent());
         file.transferTo(targetPath);
         
         return relativePath;
@@ -119,6 +130,12 @@ public class FileUtil {
         if (relativePath == null || relativePath.isEmpty()) {
             return "";
         }
+        
+        // 去除前导斜杠
+        if (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+        
         return domain + "/static/" + relativePath;
     }
 

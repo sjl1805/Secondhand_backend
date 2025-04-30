@@ -47,6 +47,8 @@ public class WebConfig implements WebMvcConfigurer {
                         
                         // 文件公开访问路径
                         "/file/preview/**",
+                        "/file/download/**",
+                        "/file/info",
                         "/uploads/**",
                         "/uploads/avatar/**",
                         "/uploads/product/**",
@@ -82,12 +84,12 @@ public class WebConfig implements WebMvcConfigurer {
                 
         // 静态资源和上传文件
         registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/")
+                .addResourceLocations("classpath:/static/", "file:static/")
                 .resourceChain(false);
                 
         // 确保能够访问上传的文件
         registry.addResourceHandler("/static/images/**")
-                .addResourceLocations("classpath:/static/images/")
+                .addResourceLocations("classpath:/static/images/", "file:static/images/")
                 .resourceChain(false);
     }
 } 
