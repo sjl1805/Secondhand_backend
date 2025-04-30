@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/product")
 @Tag(name = "商品管理", description = "商品发布、查看等操作")
@@ -82,5 +84,20 @@ public class ProductController {
         Long userId = UserUtils.getCurrentUserId();
         productService.deleteProduct(productId, userId);
         return Result.success();
+    }
+
+    @GetMapping("/advanced-search")
+    @Operation(summary = "高级搜索商品", description = "根据关键词、分类、价格区间、排序条件进行高级搜索")
+    public Result<IPage<ProductVO>> advancedSearchProducts(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
+            @Parameter(description = "分类ID") @RequestParam(required = false) Integer categoryId,
+            @Parameter(description = "最低价格") @RequestParam(required = false) BigDecimal minPrice,
+            @Parameter(description = "最高价格") @RequestParam(required = false) BigDecimal maxPrice,
+            @Parameter(description = "排序字段") @RequestParam(required = false) String sortField,
+            @Parameter(description = "排序方式") @RequestParam(required = false) String sortOrder) {
+        IPage<ProductVO> productList = productService.advancedSearchProducts(page, size, keyword, categoryId, minPrice, maxPrice, sortField, sortOrder);
+        return Result.success(productList);
     }
 } 
