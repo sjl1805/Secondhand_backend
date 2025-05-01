@@ -191,11 +191,11 @@ CREATE TABLE IF NOT EXISTS `recommendation`
 -- 插入测试数据
 -- 1. 插入用户数据
 INSERT INTO `user` (`username`, `password`, `nickname`, `avatar`, `phone`, `email`, `credit_score`, `role`)
-VALUES ('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '张三', '/images/avatars/avatar1.jpg',
+VALUES ('user1', '3b32279c2483cea75a5f7c219d25a331', '张三', '/images/avatars/avatar1.jpg',
         '13800138001', 'user1@example.com', 100, 0),
-       ('user2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '李四', '/images/avatars/avatar2.jpg',
+       ('user2', '3b32279c2483cea75a5f7c219d25a331', '李四', '/images/avatars/avatar2.jpg',
         '13800138002', 'user2@example.com', 95, 1),
-       ('user3', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '王五', '/images/avatars/avatar3.jpg',
+       ('user3', '3b32279c2483cea75a5f7c219d25a331', '王五', '/images/avatars/avatar3.jpg',
         '13800138003', 'user3@example.com', 90, 1);
 
 -- 2. 插入地址数据
