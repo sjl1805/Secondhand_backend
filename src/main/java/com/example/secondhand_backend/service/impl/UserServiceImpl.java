@@ -249,6 +249,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = getById(userId);
         return user != null && user.getRole() == 9 && user.getDeleted() == 0;
     }
+    @Override
+    public List<User> searchUsers(String keyword){
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.and(wrapper ->
+                wrapper.like(User::getUsername, keyword)
+                        .or()
+                        .like(User::getNickname, keyword)
+                        .or()
+        );
+        return List.of();
+    }
 }
 
 

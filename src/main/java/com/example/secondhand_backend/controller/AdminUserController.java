@@ -117,4 +117,9 @@ public class AdminUserController {
         List<User> adminList = userService.getAdminList();
         return Result.success(adminList);
     }
+    @GetMapping("user/search")
+    public Result<List<User>> searchUsers(@RequestParam("keyword") String keyword) {
+        List<User> users = userService.searchUsers(keyword);
+        return Result.success(users);
+    }
 }
