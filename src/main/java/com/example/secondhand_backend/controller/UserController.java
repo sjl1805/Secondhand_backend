@@ -40,4 +40,12 @@ public class UserController {
         User seller = userService.getSellerInfo(id);
         return Result.success(seller);
     }
+
+    @GetMapping("/basic/{id}")
+    @Operation(summary = "获取用户基本信息", description = "获取指定ID的用户基本信息")
+    public Result<User> getUserBasicInfo(@PathVariable Long id) {
+        User user = userService.getSellerInfo(id);
+        return Result.success(user);
+    }
+
 } 
