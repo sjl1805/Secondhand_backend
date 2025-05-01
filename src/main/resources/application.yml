@@ -36,12 +36,12 @@ spring:
 # 文件上传配置
 file:
   upload:
-    path: ./uploads/  # 上传根目录
+    path: ./static/images/  # 上传根目录
     avatar-path: avatar/  # 头像子目录
     product-path: products/  # 商品图片子目录
     allowed-types: jpg,jpeg,png,gif  # 允许的文件类型
     max-size: 10  # 最大文件大小(MB)
-    domain: http://localhost:8080  # 访问域名
+    domain: http://localhost:8080/api  # 访问域名
     access-pattern: /static/images/**  # 访问路径模式
 
 # 验证码配置

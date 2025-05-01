@@ -114,9 +114,23 @@ public class FileController {
         try {
             String relativePath = "images/" + type + "/" + filename;
             Path filePath = Paths.get("static/" + relativePath);
-
+            
+            System.out.println("尝试预览文件: " + filePath.toAbsolutePath().toString());
+            
             if (!Files.exists(filePath)) {
-                return ResponseEntity.notFound().build();
+                System.out.println("预览文件不存在: " + filePath.toAbsolutePath().toString());
+                
+                // 尝试在其他可能的位置查找文件
+                Path alternativePath = Paths.get("src/main/resources/static/" + relativePath);
+                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath().toString());
+                
+                if (Files.exists(alternativePath)) {
+                    filePath = alternativePath;
+                    System.out.println("在替代路径找到预览文件");
+                } else {
+                    System.out.println("替代路径也不存在预览文件");
+                    return ResponseEntity.notFound().build();
+                }
             }
 
             Resource resource = new UrlResource(filePath.toUri());
@@ -131,6 +145,8 @@ public class FileController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                     .body(resource);
         } catch (IOException e) {
+            System.out.println("文件预览异常: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -149,9 +165,23 @@ public class FileController {
         try {
             String relativePath = "images/" + type + "/" + filename;
             Path filePath = Paths.get("static/" + relativePath);
-
+            
+            System.out.println("尝试访问文件: " + filePath.toAbsolutePath().toString());
+            
             if (!Files.exists(filePath)) {
-                return ResponseEntity.notFound().build();
+                System.out.println("文件不存在: " + filePath.toAbsolutePath().toString());
+                
+                // 尝试在其他可能的位置查找文件
+                Path alternativePath = Paths.get("src/main/resources/static/" + relativePath);
+                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath().toString());
+                
+                if (Files.exists(alternativePath)) {
+                    filePath = alternativePath;
+                    System.out.println("在替代路径找到文件");
+                } else {
+                    System.out.println("替代路径也不存在文件");
+                    return ResponseEntity.notFound().build();
+                }
             }
 
             Resource resource = new UrlResource(filePath.toUri());
@@ -166,6 +196,8 @@ public class FileController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
         } catch (IOException e) {
+            System.out.println("文件下载异常: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
