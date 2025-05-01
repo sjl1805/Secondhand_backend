@@ -3,7 +3,9 @@ package com.example.secondhand_backend.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.secondhand_backend.model.common.Result;
 import com.example.secondhand_backend.model.dto.OrderCreateDTO;
+import com.example.secondhand_backend.model.dto.PaymentDTO;
 import com.example.secondhand_backend.model.vo.OrderVO;
+import com.example.secondhand_backend.model.vo.PaymentResultVO;
 import com.example.secondhand_backend.service.OrdersService;
 import com.example.secondhand_backend.utils.UserUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -94,5 +96,24 @@ public class OrderController {
         Long userId = UserUtils.getCurrentUserId();
         ordersService.receiveOrder(orderId, userId);
         return Result.success();
+    }
+    
+    @PostMapping("/{id}/payment")
+    @Operation(summary = "支付订单", description = "买家支付订单")
+    public Result<PaymentResultVO> payOrder(
+            @Parameter(description = "订单ID") @PathVariable("id") Long orderId,
+            @RequestBody PaymentDTO paymentDTO) {
+        Long userId = UserUtils.getCurrentUserId();
+        PaymentResultVO result = ordersService.payOrder(orderId, paymentDTO, userId);
+        return Result.success(result);
+    }
+    
+    @GetMapping("/{id}/payment/status")
+    @Operation(summary = "查询支付状态", description = "查询订单支付状态")
+    public Result<PaymentResultVO> getPaymentStatus(
+            @Parameter(description = "订单ID") @PathVariable("id") Long orderId) {
+        Long userId = UserUtils.getCurrentUserId();
+        PaymentResultVO result = ordersService.getPaymentStatus(orderId, userId);
+        return Result.success(result);
     }
 } 

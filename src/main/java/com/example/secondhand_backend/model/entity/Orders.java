@@ -65,4 +65,29 @@ public class Orders implements Serializable {
      */
     @TableField(fill = FieldFill.INSERT)
     private Integer deleted;
+    
+    /**
+     * 支付方式: 1-支付宝 2-微信支付 3-银行卡
+     */
+    private Integer paymentMethod;
+    
+    /**
+     * 支付状态: 1-待支付 2-支付成功 3-支付失败
+     */
+    private Integer paymentStatus;
+    
+    /**
+     * 支付时间
+     */
+    private Date paymentTime;
+    
+    /**
+     * 支付交易号
+     */
+    private String transactionNo;
+    
+    /**
+     * 订单留言
+     */
+    private String message;
 }

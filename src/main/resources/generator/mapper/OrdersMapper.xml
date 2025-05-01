@@ -16,10 +16,16 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="deleted" column="deleted"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="transactionNo" column="transaction_no"/>
+        <result property="message" column="message"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,order_no,buyer_id,seller_id,product_id,price,
-        status,address_id,create_time,update_time,deleted
+        status,address_id,create_time,update_time,deleted,
+        payment_method,payment_status,payment_time,transaction_no,message
     </sql>
 </mapper>

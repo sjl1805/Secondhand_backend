@@ -3,8 +3,10 @@ package com.example.secondhand_backend.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.dto.OrderCreateDTO;
+import com.example.secondhand_backend.model.dto.PaymentDTO;
 import com.example.secondhand_backend.model.entity.Orders;
 import com.example.secondhand_backend.model.vo.OrderVO;
+import com.example.secondhand_backend.model.vo.PaymentResultVO;
 
 import java.util.List;
 
@@ -155,4 +157,23 @@ public interface OrdersService extends IService<Orders> {
      * @return 成功删除的数量
      */
     int adminBatchDeleteOrder(List<Long> orderIds, Long operatorId);
+    
+    /**
+     * 支付订单
+     *
+     * @param orderId    订单ID
+     * @param paymentDTO 支付信息
+     * @param userId     用户ID（买家）
+     * @return 支付结果
+     */
+    PaymentResultVO payOrder(Long orderId, PaymentDTO paymentDTO, Long userId);
+    
+    /**
+     * 查询支付状态
+     *
+     * @param orderId 订单ID
+     * @param userId  用户ID（买家）
+     * @return 支付结果
+     */
+    PaymentResultVO getPaymentStatus(Long orderId, Long userId);
 }

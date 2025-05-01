@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `user`
     `phone`        VARCHAR(20) COMMENT '手机号',
     `email`        VARCHAR(100) COMMENT '邮箱',
     `credit_score` INT        DEFAULT 100 COMMENT '信用分',
-    `role`         TINYINT(1) DEFAULT 0 COMMENT '角色' 9-管理员 0-用户,
+    `role`         TINYINT(1) DEFAULT 0 COMMENT '角色: 9-管理员 0-用户',
     `create_time`  DATETIME   DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time`  DATETIME   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted`      TINYINT(1) DEFAULT 0 COMMENT '是否删除',
@@ -91,17 +91,22 @@ CREATE TABLE IF NOT EXISTS `category`
 -- 6.订单表
 CREATE TABLE IF NOT EXISTS `orders`
 (
-    `id`          BIGINT         NOT NULL AUTO_INCREMENT COMMENT '订单ID',
-    `order_no`    VARCHAR(50)    NOT NULL COMMENT '订单编号',
-    `buyer_id`    BIGINT         NOT NULL COMMENT '买家ID',
-    `seller_id`   BIGINT         NOT NULL COMMENT '卖家ID',
-    `product_id`  BIGINT         NOT NULL COMMENT '商品ID',
-    `price`       DECIMAL(10, 2) NOT NULL COMMENT '成交价格',
-    `status`      TINYINT(1) DEFAULT 1 COMMENT '状态：1-待付款 2-待发货 3-待收货 4-已完成 5-已取消',
-    `address_id`  BIGINT         NOT NULL COMMENT '收货地址ID',
-    `create_time` DATETIME   DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` DATETIME   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `deleted`     TINYINT(1) DEFAULT 0 COMMENT '是否删除',
+    `id`             BIGINT         NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+    `order_no`       VARCHAR(50)    NOT NULL COMMENT '订单编号',
+    `buyer_id`       BIGINT         NOT NULL COMMENT '买家ID',
+    `seller_id`      BIGINT         NOT NULL COMMENT '卖家ID',
+    `product_id`     BIGINT         NOT NULL COMMENT '商品ID',
+    `price`          DECIMAL(10, 2) NOT NULL COMMENT '成交价格',
+    `status`         TINYINT(1) DEFAULT 1 COMMENT '状态：1-待付款 2-待发货 3-待收货 4-已完成 5-已取消',
+    `address_id`     BIGINT         NOT NULL COMMENT '收货地址ID',
+    `create_time`    DATETIME   DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`    DATETIME   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`        TINYINT(1) DEFAULT 0 COMMENT '是否删除',
+    `payment_method` TINYINT(1) DEFAULT NULL COMMENT '支付方式: 1-支付宝 2-微信支付 3-银行卡',
+    `payment_status` TINYINT(1) DEFAULT 1 COMMENT '支付状态: 1-待支付 2-支付成功 3-支付失败',
+    `payment_time`   DATETIME   DEFAULT NULL COMMENT '支付时间',
+    `transaction_no` VARCHAR(64) DEFAULT NULL COMMENT '支付交易号',
+    `message`        VARCHAR(255) DEFAULT NULL COMMENT '订单留言',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_order_no` (`order_no`),
     KEY `idx_buyer_id` (`buyer_id`),
@@ -233,10 +238,11 @@ VALUES (1, '/images/products/iphone1.jpg', 1),
        (6, '/images/products/threebody1.jpg', 1);
 
 -- 6. 插入订单数据
-INSERT INTO `orders` (`order_no`, `buyer_id`, `seller_id`, `product_id`, `price`, `status`, `address_id`)
-VALUES ('202404290001', 2, 1, 1, 6999.00, 4, 3),
-       ('202404290002', 3, 1, 2, 12999.00, 3, 4),
-       ('202404290003', 1, 2, 3, 599.00, 2, 1);
+INSERT INTO `orders` (`order_no`, `buyer_id`, `seller_id`, `product_id`, `price`, `status`, `address_id`, 
+                     `payment_method`, `payment_status`, `payment_time`, `transaction_no`, `message`)
+VALUES ('202404290001', 2, 1, 1, 6999.00, 4, 3, 2, 2, '2024-04-29 15:30:00', '202404290001123456', '请尽快发货'),
+       ('202404290002', 3, 1, 2, 12999.00, 3, 4, 1, 2, '2024-04-29 16:45:00', '202404290002123456', '周末送达'),
+       ('202404290003', 1, 2, 3, 599.00, 2, 1, 2, 2, '2024-04-29 17:20:00', '202404290003123456', NULL);
 
 -- 7. 插入评价数据
 INSERT INTO `comment` (`order_id`, `user_id`, `product_id`, `content`, `rating`)

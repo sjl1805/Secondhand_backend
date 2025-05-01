@@ -10,21 +10,26 @@ import com.example.secondhand_backend.mapper.OrdersMapper;
 import com.example.secondhand_backend.mapper.ProductMapper;
 import com.example.secondhand_backend.mapper.UserMapper;
 import com.example.secondhand_backend.model.dto.OrderCreateDTO;
+import com.example.secondhand_backend.model.dto.PaymentDTO;
 import com.example.secondhand_backend.model.entity.Address;
 import com.example.secondhand_backend.model.entity.Orders;
 import com.example.secondhand_backend.model.entity.Product;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.model.vo.OrderVO;
+import com.example.secondhand_backend.model.vo.PaymentResultVO;
 import com.example.secondhand_backend.service.OrdersService;
 import com.example.secondhand_backend.service.ProductImageService;
 import com.example.secondhand_backend.service.ProductService;
 import com.example.secondhand_backend.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,6 +40,7 @@ import java.util.stream.Collectors;
  * @createDate 2025-04-29 13:42:28
  */
 @Service
+@Slf4j
 public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         implements OrdersService {
 
@@ -480,6 +486,154 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         }
 
         return successCount;
+    }
+
+    /**
+     * 支付订单
+     *
+     * @param orderId    订单ID
+     * @param paymentDTO 支付信息
+     * @param userId     用户ID（买家）
+     * @return 支付结果
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public PaymentResultVO payOrder(Long orderId, PaymentDTO paymentDTO, Long userId) {
+        // 1. 查询订单
+        Orders order = getById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        
+        // 2. 校验订单归属
+        if (!order.getBuyerId().equals(userId)) {
+            throw new BusinessException("无权操作此订单");
+        }
+        
+        // 3. 校验订单状态
+        if (order.getStatus() != 1) {
+            throw new BusinessException("订单状态不正确，无法支付");
+        }
+        
+        // 4. 校验支付金额
+        if (paymentDTO.getAmount().compareTo(order.getPrice()) != 0) {
+            throw new BusinessException("支付金额不正确");
+        }
+        
+        // 5. 模拟支付过程 (实际项目中应该调用支付网关API)
+        // 假设所有支付都成功
+        String transactionNo = UUID.randomUUID().toString().replace("-", "");
+        Date now = new Date();
+        
+        // 6. 更新订单支付信息
+        order.setPaymentMethod(paymentDTO.getPaymentMethod());
+        order.setPaymentStatus(2); // 支付成功
+        order.setPaymentTime(now);
+        order.setTransactionNo(transactionNo);
+        order.setStatus(2); // 待发货
+        order.setMessage(paymentDTO.getMessage());
+        order.setUpdateTime(now);
+        
+        // 7. 保存订单
+        boolean success = updateById(order);
+        if (!success) {
+            throw new BusinessException("支付失败，请稍后重试");
+        }
+        
+        // 8. 构建支付结果
+        PaymentResultVO resultVO = PaymentResultVO.builder()
+                .orderId(order.getId())
+                .orderNo(order.getOrderNo())
+                .paymentStatus(order.getPaymentStatus())
+                .paymentStatusDesc(getPaymentStatusDesc(order.getPaymentStatus()))
+                .amount(order.getPrice())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentMethodDesc(getPaymentMethodDesc(order.getPaymentMethod()))
+                .paymentTime(order.getPaymentTime())
+                .transactionNo(order.getTransactionNo())
+                .build();
+        
+        return resultVO;
+    }
+    
+    /**
+     * 查询支付状态
+     *
+     * @param orderId 订单ID
+     * @param userId  用户ID（买家）
+     * @return 支付结果
+     */
+    @Override
+    public PaymentResultVO getPaymentStatus(Long orderId, Long userId) {
+        // 1. 查询订单
+        Orders order = getById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        
+        // 2. 校验订单归属
+        if (!order.getBuyerId().equals(userId)) {
+            throw new BusinessException("无权查询此订单");
+        }
+        
+        // 3. 构建支付结果
+        PaymentResultVO resultVO = PaymentResultVO.builder()
+                .orderId(order.getId())
+                .orderNo(order.getOrderNo())
+                .paymentStatus(order.getPaymentStatus())
+                .paymentStatusDesc(getPaymentStatusDesc(order.getPaymentStatus()))
+                .amount(order.getPrice())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentMethodDesc(getPaymentMethodDesc(order.getPaymentMethod()))
+                .paymentTime(order.getPaymentTime())
+                .transactionNo(order.getTransactionNo())
+                .build();
+        
+        return resultVO;
+    }
+    
+    /**
+     * 获取支付状态描述
+     *
+     * @param status 支付状态：1-待支付 2-支付成功 3-支付失败
+     * @return 支付状态描述
+     */
+    private String getPaymentStatusDesc(Integer status) {
+        if (status == null) {
+            return "";
+        }
+        switch (status) {
+            case 1:
+                return "待支付";
+            case 2:
+                return "支付成功";
+            case 3:
+                return "支付失败";
+            default:
+                return "未知状态";
+        }
+    }
+    
+    /**
+     * 获取支付方式描述
+     *
+     * @param method 支付方式：1-支付宝 2-微信支付 3-银行卡
+     * @return 支付方式描述
+     */
+    private String getPaymentMethodDesc(Integer method) {
+        if (method == null) {
+            return "";
+        }
+        switch (method) {
+            case 1:
+                return "支付宝";
+            case 2:
+                return "微信支付";
+            case 3:
+                return "银行卡";
+            default:
+                return "未知方式";
+        }
     }
 
     /**
