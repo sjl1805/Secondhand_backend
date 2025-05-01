@@ -365,7 +365,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
      * 将Product转换为ProductVO
      *
      * @param product 商品实体
-     * @param userId 当前用户ID，用于判断是否收藏
+     * @param userId  当前用户ID，用于判断是否收藏
      * @return 商品视图对象
      */
     @Override
@@ -582,19 +582,19 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Product::getUserId, userId)
                 .eq(Product::getDeleted, 0);
-        
+
         // 如果指定了商品状态，添加状态条件
         if (status != null) {
             queryWrapper.eq(Product::getStatus, status);
         }
-        
+
         // 按创建时间倒序排序
         queryWrapper.orderByDesc(Product::getCreateTime);
-        
+
         // 分页查询
         Page<Product> productPage = new Page<>(page, size);
         Page<Product> resultPage = page(productPage, queryWrapper);
-        
+
         // 转换为ProductVO
         return convertToProductVOPage(resultPage);
     }

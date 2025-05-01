@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -79,7 +79,7 @@ public class FileUtil {
         // 生成唯一文件名
         String fileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + extension;
         String relativePath = "images/" + subDir + "/" + fileName;
-        
+
         System.out.println("准备上传文件至: " + relativePath);
         System.out.println("当前工作目录: " + new File("").getAbsolutePath());
 
@@ -114,7 +114,7 @@ public class FileUtil {
         System.out.println("保存文件至: " + targetPath.toAbsolutePath());
         Files.createDirectories(targetPath.getParent());
         file.transferTo(targetPath);
-        
+
         // 检查文件是否成功创建
         if (Files.exists(targetPath)) {
             System.out.println("文件已成功保存: " + targetPath.toAbsolutePath());

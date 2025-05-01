@@ -157,7 +157,7 @@ public interface OrdersService extends IService<Orders> {
      * @return 成功删除的数量
      */
     int adminBatchDeleteOrder(List<Long> orderIds, Long operatorId);
-    
+
     /**
      * 支付订单
      *
@@ -167,7 +167,7 @@ public interface OrdersService extends IService<Orders> {
      * @return 支付结果
      */
     PaymentResultVO payOrder(Long orderId, PaymentDTO paymentDTO, Long userId);
-    
+
     /**
      * 查询支付状态
      *

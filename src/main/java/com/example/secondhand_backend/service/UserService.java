@@ -103,9 +103,9 @@ public interface UserService extends IService<User> {
     boolean isAdmin(Long userId);
 
     /*
-    * 根据关键词搜索用户
-    * @param keyword 关键词
-    * @return 用户列表
+     * 根据关键词搜索用户
+     * @param keyword 关键词
+     * @return 用户列表
      * */
     List<User> searchUsers(String keyword);
 }

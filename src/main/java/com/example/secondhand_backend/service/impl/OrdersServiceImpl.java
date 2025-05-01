@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -504,27 +503,27 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null) {
             throw new BusinessException("订单不存在");
         }
-        
+
         // 2. 校验订单归属
         if (!order.getBuyerId().equals(userId)) {
             throw new BusinessException("无权操作此订单");
         }
-        
+
         // 3. 校验订单状态
         if (order.getStatus() != 1) {
             throw new BusinessException("订单状态不正确，无法支付");
         }
-        
+
         // 4. 校验支付金额
         if (paymentDTO.getAmount().compareTo(order.getPrice()) != 0) {
             throw new BusinessException("支付金额不正确");
         }
-        
+
         // 5. 模拟支付过程 (实际项目中应该调用支付网关API)
         // 假设所有支付都成功
         String transactionNo = UUID.randomUUID().toString().replace("-", "");
         Date now = new Date();
-        
+
         // 6. 更新订单支付信息
         order.setPaymentMethod(paymentDTO.getPaymentMethod());
         order.setPaymentStatus(2); // 支付成功
@@ -533,13 +532,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         order.setStatus(2); // 待发货
         order.setMessage(paymentDTO.getMessage());
         order.setUpdateTime(now);
-        
+
         // 7. 保存订单
         boolean success = updateById(order);
         if (!success) {
             throw new BusinessException("支付失败，请稍后重试");
         }
-        
+
         // 8. 构建支付结果
         PaymentResultVO resultVO = PaymentResultVO.builder()
                 .orderId(order.getId())
@@ -552,10 +551,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 .paymentTime(order.getPaymentTime())
                 .transactionNo(order.getTransactionNo())
                 .build();
-        
+
         return resultVO;
     }
-    
+
     /**
      * 查询支付状态
      *
@@ -570,12 +569,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null) {
             throw new BusinessException("订单不存在");
         }
-        
+
         // 2. 校验订单归属
         if (!order.getBuyerId().equals(userId)) {
             throw new BusinessException("无权查询此订单");
         }
-        
+
         // 3. 构建支付结果
         PaymentResultVO resultVO = PaymentResultVO.builder()
                 .orderId(order.getId())
@@ -588,10 +587,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 .paymentTime(order.getPaymentTime())
                 .transactionNo(order.getTransactionNo())
                 .build();
-        
+
         return resultVO;
     }
-    
+
     /**
      * 获取支付状态描述
      *
@@ -613,7 +612,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 return "未知状态";
         }
     }
-    
+
     /**
      * 获取支付方式描述
      *

@@ -209,7 +209,7 @@ public interface ProductService extends IService<Product> {
      * 将Product转换为ProductVO
      *
      * @param product 商品实体
-     * @param userId 当前用户ID，用于判断是否收藏
+     * @param userId  当前用户ID，用于判断是否收藏
      * @return 商品视图对象
      */
     ProductVO convertToProductVO(Product product, Long userId);

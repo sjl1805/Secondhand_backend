@@ -79,7 +79,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         System.out.println("配置资源处理器...");
         System.out.println("工作目录: " + new File("").getAbsolutePath());
-        
+
         // Swagger UI资源
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
@@ -94,16 +94,16 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/static/images/**")
                 .addResourceLocations("classpath:/static/images/", "file:static/images/", "file:./static/images/")
                 .resourceChain(false);
-                
+
         // 添加针对具体上传目录的映射
         registry.addResourceHandler("/static/images/products/**")
                 .addResourceLocations("classpath:/static/images/products/", "file:static/images/products/", "file:./static/images/products/")
                 .resourceChain(false);
-                
+
         registry.addResourceHandler("/static/images/avatar/**")
                 .addResourceLocations("classpath:/static/images/avatar/", "file:static/images/avatar/", "file:./static/images/avatar/")
                 .resourceChain(false);
-                
+
         System.out.println("资源处理器配置完成");
     }
 } 
