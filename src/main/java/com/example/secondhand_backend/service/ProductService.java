@@ -193,4 +193,24 @@ public interface ProductService extends IService<Product> {
     IPage<ProductVO> advancedSearchProducts(int page, int size, String keyword, Integer categoryId,
                                             BigDecimal minPrice, BigDecimal maxPrice,
                                             String sortField, String sortOrder);
+
+    /**
+     * 获取特定卖家的商品列表
+     *
+     * @param userId 卖家用户ID
+     * @param page   页码
+     * @param size   每页数量
+     * @param status 商品状态：1-在售 2-已售 3-下架，可为空
+     * @return 商品列表
+     */
+    IPage<ProductVO> getSellerProducts(Long userId, int page, int size, Integer status);
+
+    /**
+     * 将Product转换为ProductVO
+     *
+     * @param product 商品实体
+     * @param userId 当前用户ID，用于判断是否收藏
+     * @return 商品视图对象
+     */
+    ProductVO convertToProductVO(Product product, Long userId);
 }

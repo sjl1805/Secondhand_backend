@@ -2,6 +2,7 @@ package com.example.secondhand_backend.controller;
 
 import com.example.secondhand_backend.model.common.Result;
 import com.example.secondhand_backend.model.entity.Product;
+import com.example.secondhand_backend.model.vo.ProductVO;
 import com.example.secondhand_backend.service.RecommendationService;
 import com.example.secondhand_backend.utils.UserUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,19 +26,19 @@ public class RecommendationController {
 
     @GetMapping("/user-based")
     @Operation(summary = "基于用户的推荐", description = "获取基于用户协同过滤的商品推荐")
-    public Result<List<Product>> getUserBasedRecommendations(
+    public Result<List<ProductVO>> getUserBasedRecommendations(
             @Parameter(description = "推荐数量") @RequestParam(defaultValue = "10") int limit) {
         Long userId = UserUtils.getCurrentUserId();
-        List<Product> recommendations = recommendationService.recommendProductsForUser(userId, limit);
+        List<ProductVO> recommendations = recommendationService.recommendProductsForUser(userId, limit);
         return Result.success(recommendations);
     }
 
     @GetMapping("/item-based")
     @Operation(summary = "基于商品的推荐", description = "获取基于商品协同过滤的商品推荐")
-    public Result<List<Product>> getItemBasedRecommendations(
+    public Result<List<ProductVO>> getItemBasedRecommendations(
             @Parameter(description = "推荐数量") @RequestParam(defaultValue = "10") int limit) {
         Long userId = UserUtils.getCurrentUserId();
-        List<Product> recommendations = recommendationService.recommendSimilarProducts(userId, limit);
+        List<ProductVO> recommendations = recommendationService.recommendSimilarProducts(userId, limit);
         return Result.success(recommendations);
     }
 

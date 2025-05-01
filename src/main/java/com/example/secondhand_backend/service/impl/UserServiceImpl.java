@@ -143,6 +143,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public User getSellerInfo(Long sellerId) {
+        User seller = getById(sellerId);
+        if (seller == null || seller.getDeleted() == 1) {
+            throw new BusinessException("卖家不存在或已删除");
+        }
+        return seller;
+    }
+
+    @Override
     @Transactional
     public void updateUserStatus(Long userId, Integer creditScore, Integer role, Long operatorId) {
         // 验证操作者是否为管理员

@@ -100,4 +100,23 @@ public class ProductController {
         IPage<ProductVO> productList = productService.advancedSearchProducts(page, size, keyword, categoryId, minPrice, maxPrice, sortField, sortOrder);
         return Result.success(productList);
     }
+
+    @PutMapping("/{id}/view")
+    @Operation(summary = "增加商品浏览次数", description = "增加指定ID的商品浏览次数")
+    public Result<Void> incrementViewCount(
+            @Parameter(description = "商品ID") @PathVariable("id") Long productId) {
+        productService.incrementViewCount(productId);
+        return Result.success();
+    }
+
+    @GetMapping("/seller/{userId}")
+    @Operation(summary = "获取指定用户的商品列表", description = "分页获取指定用户ID的商品列表，可按商品状态筛选")
+    public Result<IPage<ProductVO>> getSellerProducts(
+            @Parameter(description = "卖家用户ID") @PathVariable("userId") Long userId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "商品状态：1-在售 2-已售 3-下架") @RequestParam(required = false) Integer status) {
+        IPage<ProductVO> productList = productService.getSellerProducts(userId, page, size, status);
+        return Result.success(productList);
+    }
 } 

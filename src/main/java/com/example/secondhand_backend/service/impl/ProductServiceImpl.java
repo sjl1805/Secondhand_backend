@@ -365,10 +365,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
      * 将Product转换为ProductVO
      *
      * @param product 商品实体
-     * @param userId  用户ID
-     * @return 商品VO
+     * @param userId 当前用户ID，用于判断是否收藏
+     * @return 商品视图对象
      */
-    private ProductVO convertToProductVO(Product product, Long userId) {
+    @Override
+    public ProductVO convertToProductVO(Product product, Long userId) {
         ProductVO productVO = new ProductVO();
         BeanUtils.copyProperties(product, productVO);
 
@@ -529,24 +530,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
                                                    String sortField, String sortOrder) {
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Product::getDeleted, 0)
-                .eq(Product::getStatus, 1); // 只查询在售商品
+        queryWrapper.eq(Product::getDeleted, 0);
 
-        // 如果有分类ID，添加分类条件
-        if (categoryId != null && categoryId > 0) {
-            queryWrapper.eq(Product::getCategoryId, categoryId);
-        }
-
-        // 如果有价格区间，添加价格条件
-        if (minPrice != null) {
-            queryWrapper.ge(Product::getPrice, minPrice);
-        }
-
-        if (maxPrice != null) {
-            queryWrapper.le(Product::getPrice, maxPrice);
-        }
-
-        // 如果有关键词，添加关键词条件
+        // 关键词搜索
         if (StringUtils.hasText(keyword)) {
             queryWrapper.and(wrapper ->
                     wrapper.like(Product::getTitle, keyword)
@@ -555,7 +541,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
             );
         }
 
-        // 添加排序条件
+        // 分类筛选
+        if (categoryId != null && categoryId > 0) {
+            queryWrapper.eq(Product::getCategoryId, categoryId);
+        }
+
+        // 价格区间
+        if (minPrice != null) {
+            queryWrapper.ge(Product::getPrice, minPrice);
+        }
+        if (maxPrice != null) {
+            queryWrapper.le(Product::getPrice, maxPrice);
+        }
+
+        // 排序
         if ("price".equals(sortField)) {
             if ("asc".equals(sortOrder)) {
                 queryWrapper.orderByAsc(Product::getPrice);
@@ -563,24 +562,39 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
                 queryWrapper.orderByDesc(Product::getPrice);
             }
         } else if ("viewCount".equals(sortField)) {
-            if ("asc".equals(sortOrder)) {
-                queryWrapper.orderByAsc(Product::getViewCount);
-            } else {
-                queryWrapper.orderByDesc(Product::getViewCount);
-            }
+            queryWrapper.orderByDesc(Product::getViewCount);
         } else {
             // 默认按创建时间排序
-            if ("asc".equals(sortOrder)) {
-                queryWrapper.orderByAsc(Product::getCreateTime);
-            } else {
-                queryWrapper.orderByDesc(Product::getCreateTime);
-            }
+            queryWrapper.orderByDesc(Product::getCreateTime);
         }
 
         // 分页查询
         Page<Product> productPage = new Page<>(page, size);
         Page<Product> resultPage = page(productPage, queryWrapper);
 
+        // 转换为ProductVO
+        return convertToProductVOPage(resultPage);
+    }
+
+    @Override
+    public IPage<ProductVO> getSellerProducts(Long userId, int page, int size, Integer status) {
+        // 创建查询条件
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Product::getUserId, userId)
+                .eq(Product::getDeleted, 0);
+        
+        // 如果指定了商品状态，添加状态条件
+        if (status != null) {
+            queryWrapper.eq(Product::getStatus, status);
+        }
+        
+        // 按创建时间倒序排序
+        queryWrapper.orderByDesc(Product::getCreateTime);
+        
+        // 分页查询
+        Page<Product> productPage = new Page<>(page, size);
+        Page<Product> resultPage = page(productPage, queryWrapper);
+        
         // 转换为ProductVO
         return convertToProductVOPage(resultPage);
     }

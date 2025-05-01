@@ -33,4 +33,11 @@ public class UserController {
         userService.updateUserInfo(userId, userInfoDTO);
         return Result.success();
     }
+
+    @GetMapping("/seller/{id}")
+    @Operation(summary = "获取卖家信息", description = "获取指定ID的卖家信息")
+    public Result<User> getSellerInfo(@PathVariable Long id) {
+        User seller = userService.getSellerInfo(id);
+        return Result.success(seller);
+    }
 } 

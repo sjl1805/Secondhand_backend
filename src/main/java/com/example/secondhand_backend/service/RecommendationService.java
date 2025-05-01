@@ -3,6 +3,7 @@ package com.example.secondhand_backend.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.entity.Product;
 import com.example.secondhand_backend.model.entity.Recommendation;
+import com.example.secondhand_backend.model.vo.ProductVO;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public interface RecommendationService extends IService<Recommendation> {
      * @param limit  返回推荐商品数量限制
      * @return 推荐商品列表
      */
-    List<Product> recommendProductsForUser(Long userId, int limit);
+    List<ProductVO> recommendProductsForUser(Long userId, int limit);
 
     /**
      * 基于物品的协同过滤推荐商品
@@ -32,7 +33,7 @@ public interface RecommendationService extends IService<Recommendation> {
      * @param limit  返回推荐商品数量限制
      * @return 推荐商品列表
      */
-    List<Product> recommendSimilarProducts(Long userId, int limit);
+    List<ProductVO> recommendSimilarProducts(Long userId, int limit);
 
     /**
      * 计算用户相似度矩阵

@@ -41,6 +41,11 @@ public interface UserService extends IService<User> {
     User getUserInfo(Long userId);
 
     /**
+     * 获取卖家信息
+     */
+    User getSellerInfo(Long sellerId);
+
+    /**
      * 更新用户信息
      */
     void updateUserInfo(Long userId, UserInfoDTO userInfoDTO);

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.secondhand_backend.mapper.RecommendationMapper;
 import com.example.secondhand_backend.model.entity.*;
+import com.example.secondhand_backend.model.vo.ProductVO;
 import com.example.secondhand_backend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
     private Map<Long, Map<Long, Double>> productSimilarityCache = new HashMap<>();
 
     @Override
-    public List<Product> recommendProductsForUser(Long userId, int limit) {
+    public List<ProductVO> recommendProductsForUser(Long userId, int limit) {
         // 1. 计算用户相似度矩阵（如果缓存为空）
         if (userSimilarityCache.isEmpty()) {
             userSimilarityCache = calculateUserSimilarityMatrix();
@@ -48,7 +49,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         Map<Long, Double> userSimilarities = userSimilarityCache.getOrDefault(userId, new HashMap<>());
         if (userSimilarities.isEmpty()) {
             // 如果没有相似用户，返回热门商品
-            return getPopularProducts(limit);
+            return getPopularProductsVO(limit);
         }
 
         // 按相似度排序，获取最相似的10个用户
@@ -99,7 +100,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 .limit(limit)
                 .collect(Collectors.toList());
 
-        // 5. 获取最终的推荐商品列表
+        // 5. 获取最终的推荐商品ID列表
         List<Long> recommendedProductIds = sortedProducts.stream()
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
@@ -111,7 +112,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
-            return getPopularProducts(limit);
+            return getPopularProductsVO(limit);
         }
 
         LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
@@ -119,11 +120,14 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 .eq(Product::getStatus, 1)  // 仅返回在售商品
                 .orderByDesc(Product::getViewCount);
 
-        return productService.list(productQuery);
+        List<Product> products = productService.list(productQuery);
+        return products.stream()
+                .map(product -> productService.convertToProductVO(product, userId))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Product> recommendSimilarProducts(Long userId, int limit) {
+    public List<ProductVO> recommendSimilarProducts(Long userId, int limit) {
         // 1. 计算商品相似度矩阵（如果缓存为空）
         if (productSimilarityCache.isEmpty()) {
             productSimilarityCache = calculateProductSimilarityMatrix();
@@ -133,7 +137,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         Set<Long> interactedProductIds = getUserInteractedProductIds(userId);
         if (interactedProductIds.isEmpty()) {
             // 如果用户没有交互过任何商品，返回热门商品
-            return getPopularProducts(limit);
+            return getPopularProductsVO(limit);
         }
 
         // 3. 找出与用户交互过的商品相似的其他商品
@@ -171,7 +175,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
-            return getPopularProducts(limit);
+            return getPopularProductsVO(limit);
         }
 
         LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
@@ -179,7 +183,10 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 .eq(Product::getStatus, 1)  // 仅返回在售商品
                 .orderByDesc(Product::getViewCount);
 
-        return productService.list(productQuery);
+        List<Product> products = productService.list(productQuery);
+        return products.stream()
+                .map(product -> productService.convertToProductVO(product, userId))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -290,28 +297,36 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         this.remove(queryWrapper);
 
         // 2. 生成新的推荐
-        List<Product> userBasedRecommendations = recommendProductsForUser(userId, 5);
-        List<Product> itemBasedRecommendations = recommendSimilarProducts(userId, 5);
+        List<ProductVO> userBasedRecommendations = recommendProductsForUser(userId, 5);
+        List<ProductVO> itemBasedRecommendations = recommendSimilarProducts(userId, 5);
 
         // 3. 合并去重
         Set<Long> recommendedProductIds = new HashSet<>();
         int count = 0;
 
-        for (Product product : userBasedRecommendations) {
-            if (recommendedProductIds.add(product.getId())) {
-                saveRecommendation(userId, product.getId());
+        for (ProductVO productVO : userBasedRecommendations) {
+            if (recommendedProductIds.add(productVO.getId())) {
+                saveRecommendation(userId, productVO.getId());
                 count++;
             }
         }
 
-        for (Product product : itemBasedRecommendations) {
-            if (recommendedProductIds.add(product.getId())) {
-                saveRecommendation(userId, product.getId());
+        for (ProductVO productVO : itemBasedRecommendations) {
+            if (recommendedProductIds.add(productVO.getId())) {
+                saveRecommendation(userId, productVO.getId());
                 count++;
             }
         }
 
         return count;
+    }
+
+    // 辅助方法：获取热门商品的VO对象
+    private List<ProductVO> getPopularProductsVO(int limit) {
+        List<Product> popularProducts = getPopularProducts(limit);
+        return popularProducts.stream()
+                .map(product -> productService.convertToProductVO(product, null))
+                .collect(Collectors.toList());
     }
 
     // 辅助方法：获取热门商品
