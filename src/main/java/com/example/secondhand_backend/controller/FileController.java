@@ -114,16 +114,16 @@ public class FileController {
         try {
             String relativePath = "images/" + type + "/" + filename;
             Path filePath = Paths.get("static/" + relativePath);
-            
-            System.out.println("尝试预览文件: " + filePath.toAbsolutePath().toString());
-            
+
+            System.out.println("尝试预览文件: " + filePath.toAbsolutePath());
+
             if (!Files.exists(filePath)) {
-                System.out.println("预览文件不存在: " + filePath.toAbsolutePath().toString());
-                
+                System.out.println("预览文件不存在: " + filePath.toAbsolutePath());
+
                 // 尝试在其他可能的位置查找文件
                 Path alternativePath = Paths.get("src/main/resources/static/" + relativePath);
-                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath().toString());
-                
+                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath());
+
                 if (Files.exists(alternativePath)) {
                     filePath = alternativePath;
                     System.out.println("在替代路径找到预览文件");
@@ -165,16 +165,16 @@ public class FileController {
         try {
             String relativePath = "images/" + type + "/" + filename;
             Path filePath = Paths.get("static/" + relativePath);
-            
-            System.out.println("尝试访问文件: " + filePath.toAbsolutePath().toString());
-            
+
+            System.out.println("尝试访问文件: " + filePath.toAbsolutePath());
+
             if (!Files.exists(filePath)) {
-                System.out.println("文件不存在: " + filePath.toAbsolutePath().toString());
-                
+                System.out.println("文件不存在: " + filePath.toAbsolutePath());
+
                 // 尝试在其他可能的位置查找文件
                 Path alternativePath = Paths.get("src/main/resources/static/" + relativePath);
-                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath().toString());
-                
+                System.out.println("尝试替代路径: " + alternativePath.toAbsolutePath());
+
                 if (Files.exists(alternativePath)) {
                     filePath = alternativePath;
                     System.out.println("在替代路径找到文件");

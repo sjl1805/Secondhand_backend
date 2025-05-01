@@ -1,7 +1,6 @@
 package com.example.secondhand_backend.controller;
 
 import com.example.secondhand_backend.model.common.Result;
-import com.example.secondhand_backend.model.entity.Product;
 import com.example.secondhand_backend.model.vo.ProductVO;
 import com.example.secondhand_backend.service.RecommendationService;
 import com.example.secondhand_backend.utils.UserUtils;

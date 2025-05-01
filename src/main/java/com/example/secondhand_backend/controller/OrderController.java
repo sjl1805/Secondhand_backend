@@ -97,7 +97,7 @@ public class OrderController {
         ordersService.receiveOrder(orderId, userId);
         return Result.success();
     }
-    
+
     @PostMapping("/{id}/payment")
     @Operation(summary = "支付订单", description = "买家支付订单")
     public Result<PaymentResultVO> payOrder(
@@ -107,7 +107,7 @@ public class OrderController {
         PaymentResultVO result = ordersService.payOrder(orderId, paymentDTO, userId);
         return Result.success(result);
     }
-    
+
     @GetMapping("/{id}/payment/status")
     @Operation(summary = "查询支付状态", description = "查询订单支付状态")
     public Result<PaymentResultVO> getPaymentStatus(
