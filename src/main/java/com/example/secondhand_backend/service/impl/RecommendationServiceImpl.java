@@ -2,17 +2,9 @@ package com.example.secondhand_backend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.secondhand_backend.model.entity.Recommendation;
-import com.example.secondhand_backend.model.entity.Product;
-import com.example.secondhand_backend.model.entity.Favorite;
-import com.example.secondhand_backend.model.entity.Orders;
-import com.example.secondhand_backend.model.entity.User;
-import com.example.secondhand_backend.service.RecommendationService;
-import com.example.secondhand_backend.service.ProductService;
-import com.example.secondhand_backend.service.FavoriteService;
-import com.example.secondhand_backend.service.OrdersService;
-import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.mapper.RecommendationMapper;
+import com.example.secondhand_backend.model.entity.*;
+import com.example.secondhand_backend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,73 +13,68 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
-* @author 28619
-* @description 针对表【recommendation(推荐表)】的数据库操作Service实现
-* @createDate 2025-04-29 13:42:36
-*/
+ * @author 28619
+ * @description 针对表【recommendation(推荐表)】的数据库操作Service实现
+ * @createDate 2025-04-29 13:42:36
+ */
 @Service
 public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper, Recommendation>
-    implements RecommendationService{
+        implements RecommendationService {
 
-    @Autowired
-    private FavoriteService favoriteService;
-    
-    @Autowired
-    private OrdersService ordersService;
-    
-    @Autowired
-    private ProductService productService;
-    
-    @Autowired
-    private UserService userService;
-    
     // 用户行为权重
     private static final double FAVORITE_WEIGHT = 1.0;  // 收藏权重
     private static final double ORDER_WEIGHT = 2.0;     // 购买权重
     private static final double VIEW_WEIGHT = 0.5;      // 浏览权重
-    
+    @Autowired
+    private FavoriteService favoriteService;
+    @Autowired
+    private OrdersService ordersService;
+    @Autowired
+    private ProductService productService;
+    @Autowired
+    private UserService userService;
     // 相似度计算缓存
     private Map<Long, Map<Long, Double>> userSimilarityCache = new HashMap<>();
     private Map<Long, Map<Long, Double>> productSimilarityCache = new HashMap<>();
-    
+
     @Override
     public List<Product> recommendProductsForUser(Long userId, int limit) {
         // 1. 计算用户相似度矩阵（如果缓存为空）
         if (userSimilarityCache.isEmpty()) {
             userSimilarityCache = calculateUserSimilarityMatrix();
         }
-        
+
         // 2. 获取与当前用户相似度最高的N个用户
         Map<Long, Double> userSimilarities = userSimilarityCache.getOrDefault(userId, new HashMap<>());
         if (userSimilarities.isEmpty()) {
             // 如果没有相似用户，返回热门商品
             return getPopularProducts(limit);
         }
-        
+
         // 按相似度排序，获取最相似的10个用户
         List<Map.Entry<Long, Double>> sortedUsers = userSimilarities.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(10)
                 .collect(Collectors.toList());
-        
+
         // 3. 获取这些相似用户喜欢的商品（收藏、购买）
         Set<Long> currentUserProductIds = getUserInteractedProductIds(userId);
         Map<Long, Double> productScores = new HashMap<>();
-        
+
         for (Map.Entry<Long, Double> userEntry : sortedUsers) {
             Long similarUserId = userEntry.getKey();
             Double similarity = userEntry.getValue();
-            
+
             // 获取相似用户收藏的商品
             LambdaQueryWrapper<Favorite> favoriteQuery = new LambdaQueryWrapper<>();
             favoriteQuery.eq(Favorite::getUserId, similarUserId);
             List<Favorite> favorites = favoriteService.list(favoriteQuery);
-            
+
             // 获取相似用户购买的商品
             LambdaQueryWrapper<Orders> orderQuery = new LambdaQueryWrapper<>();
             orderQuery.eq(Orders::getBuyerId, similarUserId);
             List<Orders> orders = ordersService.list(orderQuery);
-            
+
             // 计算商品得分
             for (Favorite favorite : favorites) {
                 Long productId = favorite.getProductId();
@@ -96,7 +83,7 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                     productScores.put(productId, productScores.getOrDefault(productId, 0.0) + score);
                 }
             }
-            
+
             for (Orders order : orders) {
                 Long productId = order.getProductId();
                 if (!currentUserProductIds.contains(productId)) {
@@ -105,59 +92,59 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 }
             }
         }
-        
+
         // 4. 按照得分排序，获取推荐商品
         List<Map.Entry<Long, Double>> sortedProducts = productScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
-        
+
         // 5. 获取最终的推荐商品列表
         List<Long> recommendedProductIds = sortedProducts.stream()
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        
+
         // 6. 保存推荐记录
         for (Long productId : recommendedProductIds) {
             saveRecommendation(userId, productId);
         }
-        
+
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
             return getPopularProducts(limit);
         }
-        
+
         LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
         productQuery.in(Product::getId, recommendedProductIds)
-                    .eq(Product::getStatus, 1)  // 仅返回在售商品
-                    .orderByDesc(Product::getViewCount);
-        
+                .eq(Product::getStatus, 1)  // 仅返回在售商品
+                .orderByDesc(Product::getViewCount);
+
         return productService.list(productQuery);
     }
-    
+
     @Override
     public List<Product> recommendSimilarProducts(Long userId, int limit) {
         // 1. 计算商品相似度矩阵（如果缓存为空）
         if (productSimilarityCache.isEmpty()) {
             productSimilarityCache = calculateProductSimilarityMatrix();
         }
-        
+
         // 2. 获取用户已交互过的商品
         Set<Long> interactedProductIds = getUserInteractedProductIds(userId);
         if (interactedProductIds.isEmpty()) {
             // 如果用户没有交互过任何商品，返回热门商品
             return getPopularProducts(limit);
         }
-        
+
         // 3. 找出与用户交互过的商品相似的其他商品
         Map<Long, Double> productScores = new HashMap<>();
-        
+
         for (Long interactedProductId : interactedProductIds) {
             Map<Long, Double> similarProducts = productSimilarityCache.getOrDefault(interactedProductId, new HashMap<>());
             for (Map.Entry<Long, Double> entry : similarProducts.entrySet()) {
                 Long similarProductId = entry.getKey();
                 Double similarity = entry.getValue();
-                
+
                 // 过滤掉用户已经交互过的商品
                 if (!interactedProductIds.contains(similarProductId)) {
                     double currentScore = productScores.getOrDefault(similarProductId, 0.0);
@@ -165,135 +152,135 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 }
             }
         }
-        
+
         // 4. 按照相似度得分排序
         List<Map.Entry<Long, Double>> sortedProducts = productScores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
-        
+
         // 5. 获取最终的推荐商品ID列表
         List<Long> recommendedProductIds = sortedProducts.stream()
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        
+
         // 6. 保存推荐记录
         for (Long productId : recommendedProductIds) {
             saveRecommendation(userId, productId);
         }
-        
+
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
             return getPopularProducts(limit);
         }
-        
+
         LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
         productQuery.in(Product::getId, recommendedProductIds)
-                    .eq(Product::getStatus, 1)  // 仅返回在售商品
-                    .orderByDesc(Product::getViewCount);
-        
+                .eq(Product::getStatus, 1)  // 仅返回在售商品
+                .orderByDesc(Product::getViewCount);
+
         return productService.list(productQuery);
     }
-    
+
     @Override
     public Map<Long, Map<Long, Double>> calculateUserSimilarityMatrix() {
         // 1. 获取所有用户
         List<User> allUsers = userService.list();
         Map<Long, Map<Long, Double>> userSimilarityMatrix = new HashMap<>();
-        
+
         // 2. 初始化用户-商品交互矩阵
         Map<Long, Map<Long, Double>> userProductMatrix = new HashMap<>();
-        
+
         for (User user : allUsers) {
             Long userId = user.getId();
             userProductMatrix.put(userId, getUserProductInteractions(userId));
         }
-        
+
         // 3. 计算用户间相似度（余弦相似度）
         for (int i = 0; i < allUsers.size(); i++) {
             Long userA = allUsers.get(i).getId();
             Map<Long, Double> userAPreferences = userProductMatrix.get(userA);
             Map<Long, Double> similarityMap = new HashMap<>();
-            
+
             for (int j = 0; j < allUsers.size(); j++) {
                 if (i == j) continue;  // 跳过自身
-                
+
                 Long userB = allUsers.get(j).getId();
                 Map<Long, Double> userBPreferences = userProductMatrix.get(userB);
-                
+
                 // 计算余弦相似度
                 double similarity = calculateCosineSimilarity(userAPreferences, userBPreferences);
                 if (similarity > 0) {
                     similarityMap.put(userB, similarity);
                 }
             }
-            
+
             userSimilarityMatrix.put(userA, similarityMap);
         }
-        
+
         return userSimilarityMatrix;
     }
-    
+
     @Override
     public Map<Long, Map<Long, Double>> calculateProductSimilarityMatrix() {
         // 1. 获取所有商品
         List<Product> allProducts = productService.list();
         Map<Long, Map<Long, Double>> productSimilarityMatrix = new HashMap<>();
-        
+
         // 2. 初始化商品-用户交互矩阵
         Map<Long, Map<Long, Double>> productUserMatrix = new HashMap<>();
-        
+
         for (Product product : allProducts) {
             Long productId = product.getId();
             productUserMatrix.put(productId, getProductUserInteractions(productId));
         }
-        
+
         // 3. 计算商品间相似度（余弦相似度）
         for (int i = 0; i < allProducts.size(); i++) {
             Long productA = allProducts.get(i).getId();
             Map<Long, Double> productAUsers = productUserMatrix.get(productA);
             Map<Long, Double> similarityMap = new HashMap<>();
-            
+
             for (int j = 0; j < allProducts.size(); j++) {
                 if (i == j) continue;  // 跳过自身
-                
+
                 Long productB = allProducts.get(j).getId();
                 Map<Long, Double> productBUsers = productUserMatrix.get(productB);
-                
+
                 // 计算余弦相似度
                 double similarity = calculateCosineSimilarity(productAUsers, productBUsers);
                 if (similarity > 0) {
                     similarityMap.put(productB, similarity);
                 }
             }
-            
+
             productSimilarityMatrix.put(productA, similarityMap);
         }
-        
+
         return productSimilarityMatrix;
     }
-    
+
     @Override
     @Transactional
     public boolean saveRecommendation(Long userId, Long productId) {
         // 检查是否已存在该推荐记录
         LambdaQueryWrapper<Recommendation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Recommendation::getUserId, userId)
-                    .eq(Recommendation::getProductId, productId);
-        
+                .eq(Recommendation::getProductId, productId);
+
         if (this.count(queryWrapper) > 0) {
             // 已存在推荐记录，无需重复保存
             return true;
         }
-        
+
         // 创建新的推荐记录
         Recommendation recommendation = new Recommendation();
         recommendation.setUserId(userId);
         recommendation.setProductId(productId);
-        
+
         return this.save(recommendation);
     }
-    
+
     @Override
     @Transactional
     public int updateUserRecommendations(Long userId) {
@@ -301,133 +288,133 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         LambdaQueryWrapper<Recommendation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Recommendation::getUserId, userId);
         this.remove(queryWrapper);
-        
+
         // 2. 生成新的推荐
         List<Product> userBasedRecommendations = recommendProductsForUser(userId, 5);
         List<Product> itemBasedRecommendations = recommendSimilarProducts(userId, 5);
-        
+
         // 3. 合并去重
         Set<Long> recommendedProductIds = new HashSet<>();
         int count = 0;
-        
+
         for (Product product : userBasedRecommendations) {
             if (recommendedProductIds.add(product.getId())) {
                 saveRecommendation(userId, product.getId());
                 count++;
             }
         }
-        
+
         for (Product product : itemBasedRecommendations) {
             if (recommendedProductIds.add(product.getId())) {
                 saveRecommendation(userId, product.getId());
                 count++;
             }
         }
-        
+
         return count;
     }
-    
+
     // 辅助方法：获取热门商品
     private List<Product> getPopularProducts(int limit) {
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Product::getStatus, 1)  // 仅返回在售商品
-                   .orderByDesc(Product::getViewCount)
-                   .last("LIMIT " + limit);
-        
+                .orderByDesc(Product::getViewCount)
+                .last("LIMIT " + limit);
+
         return productService.list(queryWrapper);
     }
-    
+
     // 辅助方法：获取用户已交互的商品ID集合
     private Set<Long> getUserInteractedProductIds(Long userId) {
         Set<Long> productIds = new HashSet<>();
-        
+
         // 获取用户收藏的商品
         LambdaQueryWrapper<Favorite> favoriteQuery = new LambdaQueryWrapper<>();
         favoriteQuery.eq(Favorite::getUserId, userId);
         List<Favorite> favorites = favoriteService.list(favoriteQuery);
-        
+
         // 获取用户购买的商品
         LambdaQueryWrapper<Orders> orderQuery = new LambdaQueryWrapper<>();
         orderQuery.eq(Orders::getBuyerId, userId);
         List<Orders> orders = ordersService.list(orderQuery);
-        
+
         // 添加所有商品ID
         favorites.forEach(favorite -> productIds.add(favorite.getProductId()));
         orders.forEach(order -> productIds.add(order.getProductId()));
-        
+
         return productIds;
     }
-    
+
     // 辅助方法：获取用户-商品交互矩阵
     private Map<Long, Double> getUserProductInteractions(Long userId) {
         Map<Long, Double> interactions = new HashMap<>();
-        
+
         // 获取用户收藏的商品
         LambdaQueryWrapper<Favorite> favoriteQuery = new LambdaQueryWrapper<>();
         favoriteQuery.eq(Favorite::getUserId, userId);
         List<Favorite> favorites = favoriteService.list(favoriteQuery);
-        
+
         // 获取用户购买的商品
         LambdaQueryWrapper<Orders> orderQuery = new LambdaQueryWrapper<>();
         orderQuery.eq(Orders::getBuyerId, userId);
         List<Orders> orders = ordersService.list(orderQuery);
-        
+
         // 收藏商品的权重
         for (Favorite favorite : favorites) {
             Long productId = favorite.getProductId();
             interactions.put(productId, FAVORITE_WEIGHT);
         }
-        
+
         // 购买商品的权重（如果已经收藏了，权重累加）
         for (Orders order : orders) {
             Long productId = order.getProductId();
             double currentWeight = interactions.getOrDefault(productId, 0.0);
             interactions.put(productId, currentWeight + ORDER_WEIGHT);
         }
-        
+
         return interactions;
     }
-    
+
     // 辅助方法：获取商品-用户交互矩阵
     private Map<Long, Double> getProductUserInteractions(Long productId) {
         Map<Long, Double> interactions = new HashMap<>();
-        
+
         // 获取收藏该商品的用户
         LambdaQueryWrapper<Favorite> favoriteQuery = new LambdaQueryWrapper<>();
         favoriteQuery.eq(Favorite::getProductId, productId);
         List<Favorite> favorites = favoriteService.list(favoriteQuery);
-        
+
         // 获取购买该商品的用户
         LambdaQueryWrapper<Orders> orderQuery = new LambdaQueryWrapper<>();
         orderQuery.eq(Orders::getProductId, productId);
         List<Orders> orders = ordersService.list(orderQuery);
-        
+
         // 收藏用户的权重
         for (Favorite favorite : favorites) {
             Long userId = favorite.getUserId();
             interactions.put(userId, FAVORITE_WEIGHT);
         }
-        
+
         // 购买用户的权重（如果已经收藏了，权重累加）
         for (Orders order : orders) {
             Long userId = order.getBuyerId();
             double currentWeight = interactions.getOrDefault(userId, 0.0);
             interactions.put(userId, currentWeight + ORDER_WEIGHT);
         }
-        
+
         return interactions;
     }
-    
+
     // 辅助方法：计算余弦相似度
     private double calculateCosineSimilarity(Map<Long, Double> vectorA, Map<Long, Double> vectorB) {
         if (vectorA.isEmpty() || vectorB.isEmpty()) {
             return 0.0;
         }
-        
+
         double dotProduct = 0.0;
         double normA = 0.0;
         double normB = 0.0;
-        
+
         // 计算点积
         for (Map.Entry<Long, Double> entryA : vectorA.entrySet()) {
             Long key = entryA.getKey();
@@ -435,24 +422,24 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 dotProduct += entryA.getValue() * vectorB.get(key);
             }
         }
-        
+
         // 计算向量A的范数
         for (Double value : vectorA.values()) {
             normA += Math.pow(value, 2);
         }
         normA = Math.sqrt(normA);
-        
+
         // 计算向量B的范数
         for (Double value : vectorB.values()) {
             normB += Math.pow(value, 2);
         }
         normB = Math.sqrt(normB);
-        
+
         // 避免除以零
         if (normA == 0 || normB == 0) {
             return 0.0;
         }
-        
+
         // 计算相似度
         return dotProduct / (normA * normB);
     }

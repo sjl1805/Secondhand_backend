@@ -23,16 +23,17 @@ public class AdminProductController {
 
     @Autowired
     private ProductService productService;
-    
+
     /**
      * 验证当前用户是否为管理员
+     *
      * @return 是否为管理员
      */
     private boolean validateAdminRole() {
         Integer role = UserUtils.getCurrentUserRole();
         return role != null && role == 9;
     }
-    
+
     @GetMapping("/list")
     @Operation(summary = "获取商品列表", description = "分页获取商品列表，支持多条件搜索")
     public Result<IPage<ProductVO>> getProductList(
@@ -46,12 +47,12 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         IPage<ProductVO> productList = productService.adminGetProductList(
                 page, size, categoryId, status, keyword, userId);
         return Result.success(productList);
     }
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "获取商品详情", description = "获取指定ID的商品详情")
     public Result<ProductVO> getProductDetail(
@@ -60,7 +61,7 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         try {
             ProductVO productVO = productService.getProductDetail(productId);
             return Result.success(productVO);
@@ -68,7 +69,7 @@ public class AdminProductController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/{id}/status")
     @Operation(summary = "更新商品状态", description = "更新指定ID的商品状态")
     public Result<Void> updateProductStatus(
@@ -78,7 +79,7 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             productService.adminUpdateProductStatus(productId, status, adminId);
@@ -87,7 +88,7 @@ public class AdminProductController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/{id}")
     @Operation(summary = "删除商品", description = "删除指定ID的商品")
     public Result<Void> deleteProduct(
@@ -96,7 +97,7 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             productService.adminDeleteProduct(productId, adminId);
@@ -105,7 +106,7 @@ public class AdminProductController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/batch/status")
     @Operation(summary = "批量更新商品状态", description = "批量更新商品状态")
     public Result<Integer> batchUpdateProductStatus(
@@ -115,7 +116,7 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             int count = productService.adminBatchUpdateProductStatus(productIds, status, adminId);
@@ -124,7 +125,7 @@ public class AdminProductController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/batch")
     @Operation(summary = "批量删除商品", description = "批量删除商品")
     public Result<Integer> batchDeleteProduct(
@@ -133,7 +134,7 @@ public class AdminProductController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             int count = productService.adminBatchDeleteProduct(productIds, adminId);

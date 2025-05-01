@@ -5,18 +5,18 @@
 <mapper namespace="com.example.secondhand_backend.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.User">
-            <id property="id" column="id" />
-            <result property="username" column="username" />
-            <result property="password" column="password" />
-            <result property="nickname" column="nickname" />
-            <result property="avatar" column="avatar" />
-            <result property="phone" column="phone" />
-            <result property="email" column="email" />
-            <result property="creditScore" column="credit_score" />
-            <result property="role" column="role" />
-            <result property="createTime" column="create_time" />
-            <result property="updateTime" column="update_time" />
-            <result property="deleted" column="deleted" />
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="role" column="role"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deleted" column="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">

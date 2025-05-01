@@ -9,17 +9,17 @@ public class UserUtils {
     private static final ThreadLocal<User> userThreadLocal = new ThreadLocal<>();
 
     /**
-     * 设置当前用户
-     */
-    public static void setCurrentUser(User user) {
-        userThreadLocal.set(user);
-    }
-
-    /**
      * 获取当前用户
      */
     public static User getCurrentUser() {
         return userThreadLocal.get();
+    }
+
+    /**
+     * 设置当前用户
+     */
+    public static void setCurrentUser(User user) {
+        userThreadLocal.set(user);
     }
 
     /**

@@ -9,8 +9,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.io.File;
-
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -19,10 +17,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${file.upload.path}")
     private String uploadPath;
-    
+
     @Value("${file.upload.avatar-path}")
     private String avatarPath;
-    
+
     @Value("${file.upload.product-path}")
     private String productPath;
 
@@ -35,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/auth/login",
                         "/auth/register",
                         "/auth/captcha",
-                        
+
                         // 公开的API接口
                         "/category/list",
                         "/category/tree",
@@ -44,7 +42,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/product/search",
                         "/product/hot",
                         "/product/advanced-search",
-                        
+
                         // 文件公开访问路径
                         "/file/preview/**",
                         "/file/download/**",
@@ -54,7 +52,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/uploads/product/**",
                         "/static/**",
                         "/static/images/**",
-                        
+
                         // Swagger和API文档
                         "/swagger-ui/**",
                         "/swagger-ui.html",
@@ -81,12 +79,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
                 .resourceChain(false);
-                
+
         // 静态资源和上传文件
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/", "file:static/")
                 .resourceChain(false);
-                
+
         // 确保能够访问上传的文件
         registry.addResourceHandler("/static/images/**")
                 .addResourceLocations("classpath:/static/images/", "file:static/images/")

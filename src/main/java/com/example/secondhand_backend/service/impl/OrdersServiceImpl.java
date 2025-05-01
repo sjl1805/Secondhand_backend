@@ -25,36 +25,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
-* @author 28619
-* @description 针对表【orders(订单表)】的数据库操作Service实现
-* @createDate 2025-04-29 13:42:28
-*/
+ * @author 28619
+ * @description 针对表【orders(订单表)】的数据库操作Service实现
+ * @createDate 2025-04-29 13:42:28
+ */
 @Service
 public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
-    implements OrdersService{
+        implements OrdersService {
 
     @Autowired
     private ProductService productService;
-    
+
     @Autowired
     private ProductMapper productMapper;
-    
+
     @Autowired
     private UserMapper userMapper;
-    
+
     @Autowired
     private AddressMapper addressMapper;
-    
+
     @Autowired
     private ProductImageService productImageService;
-    
+
     @Autowired
     private UserService userService;
 
@@ -69,18 +67,18 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (product.getStatus() != 1) {
             throw new BusinessException("商品不可购买");
         }
-        
+
         // 2. 检查是否是购买自己的商品
         if (product.getUserId().equals(userId)) {
             throw new BusinessException("不能购买自己的商品");
         }
-        
+
         // 3. 检查地址是否存在
         Address address = addressMapper.selectById(orderCreateDTO.getAddressId());
         if (address == null || !address.getUserId().equals(userId)) {
             throw new BusinessException("收货地址不存在或不属于当前用户");
         }
-        
+
         // 4. 创建订单
         Orders order = new Orders();
         order.setOrderNo(generateOrderNo());
@@ -91,14 +89,14 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         order.setStatus(1); // 待付款
         order.setAddressId(address.getId());
         order.setDeleted(0);
-        
+
         // 5. 保存订单
         save(order);
-        
+
         // 6. 更新商品状态为已售
         product.setStatus(2); // 已售
         productMapper.updateById(product);
-        
+
         return order.getId();
     }
 
@@ -109,12 +107,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证权限，只有买家或卖家可以查看订单
         if (!order.getBuyerId().equals(userId) && !order.getSellerId().equals(userId)) {
             throw new BusinessException("无权查看该订单");
         }
-        
+
         // 转换为订单VO并返回
         return convertToOrderVO(order);
     }
@@ -127,12 +125,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证状态值是否合法
         if (status < 1 || status > 5) {
             throw new BusinessException("状态值不合法");
         }
-        
+
         // 验证权限，买家可以更新为取消(5)或确认收货(4)，卖家可以更新为发货(3)
         boolean isAllowed = false;
         if (order.getBuyerId().equals(userId)) {
@@ -146,15 +144,15 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 isAllowed = true;
             }
         }
-        
+
         if (!isAllowed) {
             throw new BusinessException("无权更新订单状态或状态更新不合法");
         }
-        
+
         // 更新订单状态
         order.setStatus(status);
         updateById(order);
-        
+
         // 如果订单状态变为已取消，恢复商品状态为在售
         if (status == 5) {
             Product product = productMapper.selectById(order.getProductId());
@@ -173,21 +171,21 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证权限，只有买家可以取消订单
         if (!order.getBuyerId().equals(userId)) {
             throw new BusinessException("无权取消该订单");
         }
-        
+
         // 验证订单状态，只有待付款状态可以取消
         if (order.getStatus() != 1) {
             throw new BusinessException("只有待付款的订单可以取消");
         }
-        
+
         // 更新订单状态为已取消
         order.setStatus(5);
         updateById(order);
-        
+
         // 恢复商品状态为在售
         Product product = productMapper.selectById(order.getProductId());
         if (product != null) {
@@ -214,17 +212,17 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证权限，只有卖家可以发货
         if (!order.getSellerId().equals(userId)) {
             throw new BusinessException("无权操作该订单");
         }
-        
+
         // 验证订单状态，只有待发货状态可以发货
         if (order.getStatus() != 2) {
             throw new BusinessException("只有待发货的订单可以发货");
         }
-        
+
         // 更新订单状态为待收货
         order.setStatus(3);
         updateById(order);
@@ -238,17 +236,17 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证权限，只有买家可以确认收货
         if (!order.getBuyerId().equals(userId)) {
             throw new BusinessException("无权操作该订单");
         }
-        
+
         // 验证订单状态，只有待收货状态可以确认收货
         if (order.getStatus() != 3) {
             throw new BusinessException("只有待收货的订单可以确认收货");
         }
-        
+
         // 更新订单状态为已完成
         order.setStatus(4);
         updateById(order);
@@ -258,52 +256,52 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     public Orders getByOrderNo(String orderNo) {
         LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Orders::getOrderNo, orderNo)
-                    .eq(Orders::getDeleted, 0);
-        
+                .eq(Orders::getDeleted, 0);
+
         return getOne(queryWrapper);
     }
-    
+
     @Override
-    public IPage<OrderVO> adminGetOrderList(int page, int size, Long buyerId, Long sellerId, 
-                                          Integer status, String orderNo, Long operatorId) {
+    public IPage<OrderVO> adminGetOrderList(int page, int size, Long buyerId, Long sellerId,
+                                            Integer status, String orderNo, Long operatorId) {
         // 验证管理员权限
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         // 构建查询条件
         LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Orders::getDeleted, 0);
-        
+
         // 添加筛选条件
         if (buyerId != null) {
             queryWrapper.eq(Orders::getBuyerId, buyerId);
         }
-        
+
         if (sellerId != null) {
             queryWrapper.eq(Orders::getSellerId, sellerId);
         }
-        
+
         if (status != null) {
             queryWrapper.eq(Orders::getStatus, status);
         }
-        
+
         if (StringUtils.hasText(orderNo)) {
             queryWrapper.like(Orders::getOrderNo, orderNo);
         }
-        
+
         // 按创建时间倒序排序
         queryWrapper.orderByDesc(Orders::getCreateTime);
-        
+
         // 分页查询
         Page<Orders> ordersPage = new Page<>(page, size);
         Page<Orders> result = page(ordersPage, queryWrapper);
-        
+
         // 转换为OrderVO
         List<OrderVO> orderVOList = result.getRecords().stream()
                 .map(this::convertToOrderVO)
                 .collect(Collectors.toList());
-        
+
         // 创建新的分页对象
         Page<OrderVO> orderVOPage = new Page<>();
         orderVOPage.setCurrent(result.getCurrent());
@@ -311,27 +309,27 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         orderVOPage.setTotal(result.getTotal());
         orderVOPage.setPages(result.getPages());
         orderVOPage.setRecords(orderVOList);
-        
+
         return orderVOPage;
     }
-    
+
     @Override
     public OrderVO adminGetOrderDetail(Long orderId, Long operatorId) {
         // 验证管理员权限
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         // 获取订单
         Orders order = getById(orderId);
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 转换为订单VO并返回
         return convertToOrderVO(order);
     }
-    
+
     @Override
     @Transactional
     public void adminUpdateOrderStatus(Long orderId, Integer status, Long operatorId) {
@@ -339,22 +337,22 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         // 获取订单
         Orders order = getById(orderId);
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 验证状态值是否合法
         if (status < 1 || status > 5) {
             throw new BusinessException("状态值不合法");
         }
-        
+
         // 管理员可以将订单设置为任何状态
         order.setStatus(status);
         updateById(order);
-        
+
         // 如果订单状态变为已取消，恢复商品状态为在售
         if (status == 5) {
             Product product = productMapper.selectById(order.getProductId());
@@ -364,7 +362,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             }
         }
     }
-    
+
     @Override
     @Transactional
     public void adminDeleteOrder(Long orderId, Long operatorId) {
@@ -372,17 +370,17 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         // 获取订单
         Orders order = getById(orderId);
         if (order == null || order.getDeleted() == 1) {
             throw new BusinessException("订单不存在或已删除");
         }
-        
+
         // 逻辑删除订单
         order.setDeleted(1);
         updateById(order);
-        
+
         // 如果订单状态为待付款或待发货，恢复商品状态为在售
         if (order.getStatus() == 1 || order.getStatus() == 2) {
             Product product = productMapper.selectById(order.getProductId());
@@ -392,7 +390,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             }
         }
     }
-    
+
     @Override
     @Transactional
     public int adminBatchUpdateOrderStatus(List<Long> orderIds, Integer status, Long operatorId) {
@@ -400,18 +398,18 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         if (orderIds == null || orderIds.isEmpty()) {
             return 0;
         }
-        
+
         // 验证状态值是否合法
         if (status < 1 || status > 5) {
             throw new BusinessException("状态值不合法");
         }
-        
+
         int successCount = 0;
-        
+
         for (Long orderId : orderIds) {
             try {
                 // 获取订单
@@ -420,7 +418,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                     // 更新订单状态
                     order.setStatus(status);
                     updateById(order);
-                    
+
                     // 如果订单状态变为已取消，恢复商品状态为在售
                     if (status == 5) {
                         Product product = productMapper.selectById(order.getProductId());
@@ -429,7 +427,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                             productMapper.updateById(product);
                         }
                     }
-                    
+
                     successCount++;
                 }
             } catch (Exception e) {
@@ -437,10 +435,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 continue;
             }
         }
-        
+
         return successCount;
     }
-    
+
     @Override
     @Transactional
     public int adminBatchDeleteOrder(List<Long> orderIds, Long operatorId) {
@@ -448,13 +446,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
         }
-        
+
         if (orderIds == null || orderIds.isEmpty()) {
             return 0;
         }
-        
+
         int successCount = 0;
-        
+
         for (Long orderId : orderIds) {
             try {
                 // 获取订单
@@ -463,7 +461,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                     // 逻辑删除订单
                     order.setDeleted(1);
                     updateById(order);
-                    
+
                     // 如果订单状态为待付款或待发货，恢复商品状态为在售
                     if (order.getStatus() == 1 || order.getStatus() == 2) {
                         Product product = productMapper.selectById(order.getProductId());
@@ -472,7 +470,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                             productMapper.updateById(product);
                         }
                     }
-                    
+
                     successCount++;
                 }
             } catch (Exception e) {
@@ -480,25 +478,27 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 continue;
             }
         }
-        
+
         return successCount;
     }
-    
+
     /**
      * 检查用户是否为管理员
+     *
      * @param userId 用户ID
      * @return 是否为管理员
      */
     private boolean isAdmin(Long userId) {
         return userService.isAdmin(userId);
     }
-    
+
     /**
      * 获取买家或卖家的订单列表
-     * @param userId 用户ID
-     * @param status 状态
-     * @param page 页码
-     * @param size 每页数量
+     *
+     * @param userId  用户ID
+     * @param status  状态
+     * @param page    页码
+     * @param size    每页数量
      * @param isBuyer 是否为买家视角
      * @return 订单列表
      */
@@ -510,27 +510,27 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         } else {
             queryWrapper.eq(Orders::getSellerId, userId);
         }
-        
+
         // 如果有状态筛选
         if (status != null) {
             queryWrapper.eq(Orders::getStatus, status);
         }
-        
+
         // 未删除
         queryWrapper.eq(Orders::getDeleted, 0);
-        
+
         // 按创建时间倒序排序
         queryWrapper.orderByDesc(Orders::getCreateTime);
-        
+
         // 分页查询
         Page<Orders> ordersPage = new Page<>(page, size);
         Page<Orders> result = page(ordersPage, queryWrapper);
-        
+
         // 转换为OrderVO
         List<OrderVO> orderVOList = result.getRecords().stream()
                 .map(this::convertToOrderVO)
                 .collect(Collectors.toList());
-        
+
         // 创建新的分页对象
         Page<OrderVO> orderVOPage = new Page<>();
         orderVOPage.setCurrent(result.getCurrent());
@@ -538,45 +538,46 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         orderVOPage.setTotal(result.getTotal());
         orderVOPage.setPages(result.getPages());
         orderVOPage.setRecords(orderVOList);
-        
+
         return orderVOPage;
     }
-    
+
     /**
      * 将Orders转换为OrderVO
+     *
      * @param order 订单实体
      * @return 订单VO
      */
     private OrderVO convertToOrderVO(Orders order) {
         OrderVO orderVO = new OrderVO();
         BeanUtils.copyProperties(order, orderVO);
-        
+
         // 获取买家信息
         User buyer = userMapper.selectById(order.getBuyerId());
         if (buyer != null) {
             orderVO.setBuyerNickname(buyer.getNickname());
             orderVO.setBuyerAvatar(buyer.getAvatar());
         }
-        
+
         // 获取卖家信息
         User seller = userMapper.selectById(order.getSellerId());
         if (seller != null) {
             orderVO.setSellerNickname(seller.getNickname());
             orderVO.setSellerAvatar(seller.getAvatar());
         }
-        
+
         // 获取商品信息
         Product product = productMapper.selectById(order.getProductId());
         if (product != null) {
             orderVO.setProductTitle(product.getTitle());
-            
+
             // 获取商品第一张图片
             List<String> imageUrls = productImageService.getProductImages(product.getId());
             if (imageUrls != null && !imageUrls.isEmpty()) {
                 orderVO.setProductImage(imageUrls.get(0));
             }
         }
-        
+
         // 获取收货地址信息
         Address address = addressMapper.selectById(order.getAddressId());
         if (address != null) {
@@ -585,15 +586,16 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             orderVO.setReceiverName(address.getReceiverName());
             orderVO.setReceiverPhone(address.getReceiverPhone());
         }
-        
+
         // 设置状态文本
         orderVO.setStatusText(getStatusText(order.getStatus()));
-        
+
         return orderVO;
     }
-    
+
     /**
      * 获取状态文本
+     *
      * @param status 状态值
      * @return 状态文本
      */
@@ -613,9 +615,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 return "未知状态";
         }
     }
-    
+
     /**
      * 生成订单号
+     *
      * @return 订单号
      */
     private String generateOrderNo() {

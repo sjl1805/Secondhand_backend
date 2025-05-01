@@ -14,22 +14,22 @@ public class ProductDTO {
      * 商品标题
      */
     private String title;
-    
+
     /**
      * 商品描述
      */
     private String description;
-    
+
     /**
      * 价格
      */
     private BigDecimal price;
-    
+
     /**
      * 分类ID
      */
     private Integer categoryId;
-    
+
     /**
      * 图片URL列表
      */

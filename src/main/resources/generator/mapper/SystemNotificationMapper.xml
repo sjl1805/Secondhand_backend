@@ -5,11 +5,11 @@
 <mapper namespace="com.example.secondhand_backend.mapper.SystemNotificationMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.SystemNotification">
-            <id property="id" column="id" />
-            <result property="userId" column="user_id" />
-            <result property="content" column="content" />
-            <result property="isRead" column="is_read" />
-            <result property="createTime" column="create_time" />
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="isRead" column="is_read"/>
+        <result property="createTime" column="create_time"/>
     </resultMap>
 
     <sql id="Base_Column_List">

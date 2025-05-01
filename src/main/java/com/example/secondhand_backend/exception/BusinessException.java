@@ -4,13 +4,12 @@ import lombok.Getter;
 
 @Getter
 public class BusinessException extends RuntimeException {
-    private final int code;
-    private final String message;
-
     public static final int USERNAME_OR_PASSWORD_ERROR = 1001;
     public static final int USERNAME_EXISTS = 1002;
     public static final int CAPTCHA_ERROR = 1003;
     public static final int CAPTCHA_EXPIRED = 1004;
+    private final int code;
+    private final String message;
 
     public BusinessException(int code, String message) {
         super(message);

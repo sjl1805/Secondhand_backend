@@ -27,16 +27,16 @@ public class SystemNotificationController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size) {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getUserId, userId)
-                   .orderByDesc(SystemNotification::getCreateTime);
-        
+                .orderByDesc(SystemNotification::getCreateTime);
+
         IPage<SystemNotification> notificationPage = systemNotificationService.page(
                 new Page<>(page, size),
                 queryWrapper
         );
-        
+
         return Result.success(notificationPage);
     }
 
@@ -46,17 +46,17 @@ public class SystemNotificationController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size) {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getUserId, userId)
-                   .eq(SystemNotification::getIsRead, 0)
-                   .orderByDesc(SystemNotification::getCreateTime);
-        
+                .eq(SystemNotification::getIsRead, 0)
+                .orderByDesc(SystemNotification::getCreateTime);
+
         IPage<SystemNotification> notificationPage = systemNotificationService.page(
                 new Page<>(page, size),
                 queryWrapper
         );
-        
+
         return Result.success(notificationPage);
     }
 
@@ -65,16 +65,16 @@ public class SystemNotificationController {
     public Result<SystemNotification> getNotificationDetail(
             @Parameter(description = "通知ID") @PathVariable("id") Long notificationId) {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getId, notificationId)
-                   .eq(SystemNotification::getUserId, userId);
-        
+                .eq(SystemNotification::getUserId, userId);
+
         SystemNotification notification = systemNotificationService.getOne(queryWrapper);
         if (notification == null) {
             return Result.error("通知不存在或无权限查看");
         }
-        
+
         return Result.success(notification);
     }
 
@@ -83,19 +83,19 @@ public class SystemNotificationController {
     public Result<Void> markAsRead(
             @Parameter(description = "通知ID") @PathVariable("id") Long notificationId) {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getId, notificationId)
-                   .eq(SystemNotification::getUserId, userId);
-        
+                .eq(SystemNotification::getUserId, userId);
+
         SystemNotification notification = systemNotificationService.getOne(queryWrapper);
         if (notification == null) {
             return Result.error("通知不存在或无权限操作");
         }
-        
+
         notification.setIsRead(1);
         systemNotificationService.updateById(notification);
-        
+
         return Result.success();
     }
 
@@ -103,31 +103,31 @@ public class SystemNotificationController {
     @Operation(summary = "标记所有通知为已读", description = "标记当前用户的所有系统通知为已读")
     public Result<Integer> markAllAsRead() {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getUserId, userId)
-                   .eq(SystemNotification::getIsRead, 0);
-        
+                .eq(SystemNotification::getIsRead, 0);
+
         SystemNotification update = new SystemNotification();
         update.setIsRead(1);
-        
+
         long count = systemNotificationService.count(queryWrapper);
         systemNotificationService.update(update, queryWrapper);
-        
-        return Result.success((int)count);
+
+        return Result.success((int) count);
     }
 
     @GetMapping("/unread/count")
     @Operation(summary = "获取未读通知数量", description = "获取当前用户的未读系统通知数量")
     public Result<Integer> getUnreadCount() {
         Long userId = UserUtils.getCurrentUserId();
-        
+
         LambdaQueryWrapper<SystemNotification> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemNotification::getUserId, userId)
-                   .eq(SystemNotification::getIsRead, 0);
-        
+                .eq(SystemNotification::getIsRead, 0);
+
         long count = systemNotificationService.count(queryWrapper);
-        
-        return Result.success((int)count);
+
+        return Result.success((int) count);
     }
 } 

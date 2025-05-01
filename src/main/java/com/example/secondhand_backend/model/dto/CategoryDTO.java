@@ -14,19 +14,19 @@ public class CategoryDTO {
      */
     @Schema(description = "分类ID（更新时必填）")
     private Integer id;
-    
+
     /**
      * 分类名称
      */
     @Schema(description = "分类名称", required = true)
     private String name;
-    
+
     /**
      * 父分类ID
      */
     @Schema(description = "父分类ID", defaultValue = "0")
     private Integer parentId;
-    
+
     /**
      * 排序
      */

@@ -11,7 +11,7 @@ public class MessageDTO {
      * 接收者ID
      */
     private Long receiverId;
-    
+
     /**
      * 消息内容
      */

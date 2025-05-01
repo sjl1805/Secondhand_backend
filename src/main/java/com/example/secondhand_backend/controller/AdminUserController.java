@@ -23,16 +23,17 @@ public class AdminUserController {
 
     @Autowired
     private UserService userService;
-    
+
     /**
      * 验证当前用户是否为管理员
+     *
      * @return 是否为管理员
      */
     private boolean validateAdminRole() {
         Integer role = UserUtils.getCurrentUserRole();
         return role != null && role == 9;
     }
-    
+
     @GetMapping("/users")
     @Operation(summary = "获取用户列表", description = "分页获取用户列表，支持搜索")
     public Result<IPage<User>> getUserList(
@@ -43,11 +44,11 @@ public class AdminUserController {
         if (!validateAdminRole()) {
             return Result.error("无权访问此接口，需要管理员权限");
         }
-        
+
         IPage<User> userList = userService.getUserList(page, size, keyword);
         return Result.success(userList);
     }
-    
+
     @PutMapping("/users/{userId}/status")
     @Operation(summary = "修改用户状态", description = "修改用户信用分和角色")
     public Result<Void> updateUserStatus(
@@ -58,7 +59,7 @@ public class AdminUserController {
         if (!validateAdminRole()) {
             return Result.error("无权访问此接口，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             userService.updateUserStatus(userId, creditScore, role, adminId);
@@ -67,7 +68,7 @@ public class AdminUserController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/users/{userId}")
     @Operation(summary = "删除用户", description = "逻辑删除用户")
     public Result<Void> deleteUser(
@@ -76,7 +77,7 @@ public class AdminUserController {
         if (!validateAdminRole()) {
             return Result.error("无权访问此接口，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             userService.deleteUser(userId, adminId);
@@ -85,7 +86,7 @@ public class AdminUserController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/users/{userId}/password")
     @Operation(summary = "重置用户密码", description = "管理员重置用户密码")
     public Result<Void> resetUserPassword(
@@ -95,7 +96,7 @@ public class AdminUserController {
         if (!validateAdminRole()) {
             return Result.error("无权访问此接口，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             userService.resetUserPassword(userId, newPassword, adminId);
@@ -104,7 +105,7 @@ public class AdminUserController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @GetMapping("/admins")
     @Operation(summary = "获取管理员列表", description = "获取所有管理员用户列表")
     public Result<List<User>> getAdminList() {
@@ -112,7 +113,7 @@ public class AdminUserController {
         if (!validateAdminRole()) {
             return Result.error("无权访问此接口，需要管理员权限");
         }
-        
+
         List<User> adminList = userService.getAdminList();
         return Result.success(adminList);
     }

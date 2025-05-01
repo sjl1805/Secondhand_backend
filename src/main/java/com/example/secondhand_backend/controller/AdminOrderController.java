@@ -26,13 +26,14 @@ public class AdminOrderController {
 
     /**
      * 验证当前用户是否为管理员
+     *
      * @return 是否为管理员
      */
     private boolean validateAdminRole() {
         Integer role = UserUtils.getCurrentUserRole();
         return role != null && role == 9;
     }
-    
+
     @GetMapping("/list")
     @Operation(summary = "获取订单列表", description = "分页获取订单列表，支持多条件搜索")
     public Result<IPage<OrderVO>> getOrderList(
@@ -46,13 +47,13 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         IPage<OrderVO> orderList = ordersService.adminGetOrderList(
                 page, size, buyerId, sellerId, status, orderNo, adminId);
         return Result.success(orderList);
     }
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "获取订单详情", description = "获取指定ID的订单详情")
     public Result<OrderVO> getOrderDetail(
@@ -61,7 +62,7 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             OrderVO orderVO = ordersService.adminGetOrderDetail(orderId, adminId);
@@ -70,7 +71,7 @@ public class AdminOrderController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/{id}/status")
     @Operation(summary = "更新订单状态", description = "更新指定ID的订单状态")
     public Result<Void> updateOrderStatus(
@@ -80,7 +81,7 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             ordersService.adminUpdateOrderStatus(orderId, status, adminId);
@@ -89,7 +90,7 @@ public class AdminOrderController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/{id}")
     @Operation(summary = "删除订单", description = "删除指定ID的订单")
     public Result<Void> deleteOrder(
@@ -98,7 +99,7 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             ordersService.adminDeleteOrder(orderId, adminId);
@@ -107,7 +108,7 @@ public class AdminOrderController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/batch/status")
     @Operation(summary = "批量更新订单状态", description = "批量更新订单状态")
     public Result<Integer> batchUpdateOrderStatus(
@@ -117,7 +118,7 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             int count = ordersService.adminBatchUpdateOrderStatus(orderIds, status, adminId);
@@ -126,7 +127,7 @@ public class AdminOrderController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/batch")
     @Operation(summary = "批量删除订单", description = "批量删除订单")
     public Result<Integer> batchDeleteOrder(
@@ -135,7 +136,7 @@ public class AdminOrderController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         Long adminId = UserUtils.getCurrentUserId();
         try {
             int count = ordersService.adminBatchDeleteOrder(orderIds, adminId);

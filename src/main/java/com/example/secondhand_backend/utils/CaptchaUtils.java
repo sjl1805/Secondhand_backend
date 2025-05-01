@@ -12,15 +12,15 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class CaptchaUtils {
 
+    private static final String CAPTCHA_PREFIX = "captcha:";
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    private static final String CAPTCHA_PREFIX = "captcha:";
-
     /**
      * 生成验证码
-     * @param width 宽度
-     * @param height 高度
+     *
+     * @param width     宽度
+     * @param height    高度
      * @param codeCount 验证码字符数
      * @param lineCount 干扰线条数
      * @return 验证码对象
@@ -32,8 +32,9 @@ public class CaptchaUtils {
 
     /**
      * 保存验证码到Redis
-     * @param key 键
-     * @param code 验证码
+     *
+     * @param key    键
+     * @param code   验证码
      * @param expire 过期时间（秒）
      */
     public void saveCaptcha(String key, String code, long expire) {
@@ -42,7 +43,8 @@ public class CaptchaUtils {
 
     /**
      * 验证验证码
-     * @param key 键
+     *
+     * @param key  键
      * @param code 验证码
      * @return 是否验证通过
      */

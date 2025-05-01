@@ -5,14 +5,14 @@
 <mapper namespace="com.example.secondhand_backend.mapper.CommentMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Comment">
-            <id property="id" column="id" />
-            <result property="orderId" column="order_id" />
-            <result property="userId" column="user_id" />
-            <result property="productId" column="product_id" />
-            <result property="content" column="content" />
-            <result property="rating" column="rating" />
-            <result property="createTime" column="create_time" />
-            <result property="deleted" column="deleted" />
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="content" column="content"/>
+        <result property="rating" column="rating"/>
+        <result property="createTime" column="create_time"/>
+        <result property="deleted" column="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">

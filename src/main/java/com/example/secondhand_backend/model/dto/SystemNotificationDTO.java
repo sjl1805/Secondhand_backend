@@ -11,7 +11,7 @@ public class SystemNotificationDTO {
      * 用户ID
      */
     private Long userId;
-    
+
     /**
      * 通知内容
      */

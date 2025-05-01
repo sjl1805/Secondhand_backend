@@ -13,12 +13,12 @@ public class OrderCreateDTO {
      * 商品ID
      */
     private Long productId;
-    
+
     /**
      * 收货地址ID
      */
     private Long addressId;
-    
+
     /**
      * 成交价格
      */

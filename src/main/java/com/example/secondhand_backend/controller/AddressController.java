@@ -7,7 +7,6 @@ import com.example.secondhand_backend.utils.UserUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +16,11 @@ import java.util.List;
 @Tag(name = "地址管理", description = "用户收货地址管理")
 public class AddressController {
 
-    @Autowired
-    private AddressService addressService;
+    private final AddressService addressService;
+
+    public AddressController(AddressService addressService) {
+        this.addressService = addressService;
+    }
 
     @PostMapping
     @Operation(summary = "添加地址", description = "添加新的收货地址")
@@ -26,7 +28,7 @@ public class AddressController {
         // 设置用户ID
         Long userId = UserUtils.getCurrentUserId();
         address.setUserId(userId);
-        
+
         // 添加地址
         Long addressId = addressService.addAddress(address);
         return Result.success(addressId);
@@ -45,13 +47,13 @@ public class AddressController {
     public Result<Address> getAddressDetail(
             @Parameter(description = "地址ID") @PathVariable("id") Long addressId) {
         Address address = addressService.getAddressDetail(addressId);
-        
+
         // 验证地址归属
         Long userId = UserUtils.getCurrentUserId();
         if (!address.getUserId().equals(userId)) {
             return Result.error("无权访问该地址");
         }
-        
+
         return Result.success(address);
     }
 
@@ -63,7 +65,7 @@ public class AddressController {
         if (!address.getUserId().equals(userId)) {
             return Result.error("无权修改该地址");
         }
-        
+
         // 更新地址
         addressService.updateAddress(address);
         return Result.success();

@@ -5,10 +5,10 @@
 <mapper namespace="com.example.secondhand_backend.mapper.FavoriteMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Favorite">
-            <id property="id" column="id" />
-            <result property="userId" column="user_id" />
-            <result property="productId" column="product_id" />
-            <result property="createTime" column="create_time" />
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="createTime" column="create_time"/>
     </resultMap>
 
     <sql id="Base_Column_List">

@@ -35,14 +35,15 @@ public class CategoryVO {
      * 创建时间
      */
     private Date createTime;
-    
+
     /**
      * 子分类列表
      */
     private List<CategoryVO> children;
-    
+
     /**
      * 从Category实体转换为CategoryVO
+     *
      * @param category 分类实体
      * @return CategoryVO
      */
@@ -50,14 +51,14 @@ public class CategoryVO {
         if (category == null) {
             return null;
         }
-        
+
         CategoryVO vo = new CategoryVO();
         vo.setId(category.getId());
         vo.setName(category.getName());
         vo.setParentId(category.getParentId());
         vo.setSort(category.getSort());
         vo.setCreateTime(category.getCreateTime());
-        
+
         return vo;
     }
 } 

@@ -1,5 +1,6 @@
 package com.example.secondhand_backend.controller;
 
+import cn.hutool.captcha.LineCaptcha;
 import com.example.secondhand_backend.model.common.Result;
 import com.example.secondhand_backend.model.dto.AuthResponseDTO;
 import com.example.secondhand_backend.model.dto.LoginDTO;
@@ -7,13 +8,12 @@ import com.example.secondhand_backend.model.dto.RegisterDTO;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.CaptchaUtils;
 import com.example.secondhand_backend.utils.JwtUtils;
-import cn.hutool.captcha.LineCaptcha;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -82,6 +82,7 @@ public class AuthController {
 
     /**
      * 获取验证码
+     *
      * @return 验证码图片和key
      */
     @GetMapping("/captcha")
@@ -89,19 +90,19 @@ public class AuthController {
     public Result<Map<String, String>> getCaptcha() {
         // 生成验证码
         LineCaptcha captcha = captchaUtils.generateCaptcha(130, 48, 4, 2);
-        
+
         // 生成唯一key
         String key = UUID.randomUUID().toString();
         System.out.println(key);
         System.out.println(captcha.getCode());
         // 保存验证码到Redis，有效期5分钟
         captchaUtils.saveCaptcha(key, captcha.getCode(), 300);
-        
+
         // 返回验证码图片和key
         Map<String, String> result = new HashMap<>();
         result.put("key", key);
         result.put("image", captcha.getImageBase64());
-        
+
         return Result.success(result);
     }
 } 

@@ -11,17 +11,17 @@ public class CommentDTO {
      * 订单ID
      */
     private Long orderId;
-    
+
     /**
      * 商品ID
      */
     private Long productId;
-    
+
     /**
      * 评价内容
      */
     private String content;
-    
+
     /**
      * 评分：1-5星
      */

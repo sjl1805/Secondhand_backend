@@ -5,17 +5,17 @@
 <mapper namespace="com.example.secondhand_backend.mapper.OrdersMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Orders">
-            <id property="id" column="id" />
-            <result property="orderNo" column="order_no" />
-            <result property="buyerId" column="buyer_id" />
-            <result property="sellerId" column="seller_id" />
-            <result property="productId" column="product_id" />
-            <result property="price" column="price" />
-            <result property="status" column="status" />
-            <result property="addressId" column="address_id" />
-            <result property="createTime" column="create_time" />
-            <result property="updateTime" column="update_time" />
-            <result property="deleted" column="deleted" />
+        <id property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="buyerId" column="buyer_id"/>
+        <result property="sellerId" column="seller_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="price" column="price"/>
+        <result property="status" column="status"/>
+        <result property="addressId" column="address_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deleted" column="deleted"/>
     </resultMap>
 
     <sql id="Base_Column_List">

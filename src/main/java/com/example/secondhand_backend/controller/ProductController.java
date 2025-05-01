@@ -36,13 +36,13 @@ public class ProductController {
             @Parameter(description = "商品ID") @PathVariable("id") Long productId) {
         // 获取当前用户ID
         Long userId = UserUtils.getCurrentUserId();
-        
+
         // 获取带收藏状态的商品详情
         ProductVO productVO = productService.getProductDetailWithFavorite(productId, userId);
-        
+
         // 增加浏览次数
         productService.incrementViewCount(productId);
-        
+
         return Result.success(productVO);
     }
 

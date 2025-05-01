@@ -22,17 +22,18 @@ public class AdminCategoryController {
 
     @Autowired
     private CategoryService categoryService;
-    
-    
+
+
     /**
      * 验证当前用户是否为管理员
+     *
      * @return 是否为管理员
      */
     private boolean validateAdminRole() {
         Integer role = UserUtils.getCurrentUserRole();
         return role != null && role == 9;
     }
-    
+
     @PostMapping("/add")
     @Operation(summary = "添加分类", description = "添加新的商品分类")
     public Result<Integer> addCategory(@RequestBody CategoryDTO categoryDTO) {
@@ -40,19 +41,19 @@ public class AdminCategoryController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         try {
             // DTO转Entity
             Category category = new Category();
             BeanUtils.copyProperties(categoryDTO, category);
-            
+
             Integer categoryId = categoryService.addCategory(category);
             return Result.success(categoryId);
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @PutMapping("/update")
     @Operation(summary = "更新分类", description = "更新商品分类信息")
     public Result<Void> updateCategory(@RequestBody CategoryDTO categoryDTO) {
@@ -60,24 +61,24 @@ public class AdminCategoryController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         // 检查分类ID是否为空
         if (categoryDTO.getId() == null) {
             return Result.error("分类ID不能为空");
         }
-        
+
         try {
             // DTO转Entity
             Category category = new Category();
             BeanUtils.copyProperties(categoryDTO, category);
-            
+
             categoryService.updateCategory(category);
             return Result.success();
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @DeleteMapping("/delete/{id}")
     @Operation(summary = "删除分类", description = "删除商品分类")
     public Result<Void> deleteCategory(
@@ -86,7 +87,7 @@ public class AdminCategoryController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         try {
             categoryService.deleteCategory(categoryId);
             return Result.success();
@@ -94,7 +95,7 @@ public class AdminCategoryController {
             return Result.error(e.getMessage());
         }
     }
-    
+
     @GetMapping("/check")
     @Operation(summary = "检查分类名称", description = "检查分类名称是否已存在")
     public Result<Boolean> checkNameExists(
@@ -105,7 +106,7 @@ public class AdminCategoryController {
         if (!validateAdminRole()) {
             return Result.error("无权限执行此操作，需要管理员权限");
         }
-        
+
         boolean exists = categoryService.checkNameExists(name, parentId, excludeId);
         return Result.success(exists);
     }
