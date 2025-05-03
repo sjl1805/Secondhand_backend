@@ -45,7 +45,7 @@ public class Product implements Serializable {
     /**
      * 商品成色
      */
-    private Integer conditions;
+    private Integer productQuality;
     /**
      * 状态：1-在售 2-已售 3-下架
      */

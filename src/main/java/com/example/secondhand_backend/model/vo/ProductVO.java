@@ -44,7 +44,7 @@ public class ProductVO {
     /**
      * 商品成色
      */
-    private Integer conditions;
+    private Integer productQuality;
 
     /**
      * 价格

@@ -12,7 +12,7 @@
         <result property="price" column="price" jdbcType="DECIMAL"/>
         <result property="categoryId" column="category_id" jdbcType="INTEGER"/>
         <result property="status" column="status" jdbcType="TINYINT"/>
-        <result property="conditions" column="condition" jdbcType="TINYINT"/>
+        <result property="productQuality" column="product_quality" jdbcType="TINYINT"/>
         <result property="viewCount" column="view_count" jdbcType="INTEGER"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
@@ -22,7 +22,7 @@
     <sql id="Base_Column_List">
         id,user_id,title,
         description,price,category_id,
-        conditions,status,view_count,
+        product_quality,status,view_count,
         create_time,update_time,deleted
     </sql>
 
