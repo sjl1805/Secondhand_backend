@@ -90,4 +90,9 @@ public class Orders implements Serializable {
      * 订单留言
      */
     private String message;
+
+    /**
+     * 是否已评价
+     */
+    private Integer isCommented;
 }

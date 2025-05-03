@@ -21,6 +21,7 @@
         <result property="paymentTime" column="payment_time" jdbcType="TIMESTAMP"/>
         <result property="transactionNo" column="transaction_no" jdbcType="VARCHAR"/>
         <result property="message" column="message" jdbcType="VARCHAR"/>
+        <result property="isCommented" column="is_commented" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -29,7 +30,7 @@
         status,address_id,create_time,
         update_time,deleted,payment_method,
         payment_status,payment_time,transaction_no,
-        message
+        message,is_commented
     </sql>
     
     <!-- 获取订单状态统计 -->

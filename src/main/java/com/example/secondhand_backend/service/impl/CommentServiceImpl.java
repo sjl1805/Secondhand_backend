@@ -86,6 +86,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
         // 7. 保存评价
         save(comment);
+        
+        // 8. 更新订单评价状态
+        order.setIsCommented(1); // 设置订单已评价
+        ordersMapper.updateById(order);
 
         return comment.getId();
     }
@@ -214,6 +218,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public boolean isOrderCommented(Long orderId) {
+        // 首先检查订单表中的is_commented字段
+        Orders order = ordersMapper.selectById(orderId);
+        if (order != null && order.getIsCommented() != null && order.getIsCommented() == 1) {
+            return true;
+        }
+        
+        // 如果订单表中状态不是已评价，再查评价表进行二次确认
         // 构建查询条件
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Comment::getOrderId, orderId)

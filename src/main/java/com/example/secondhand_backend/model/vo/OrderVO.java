@@ -101,7 +101,42 @@ public class OrderVO {
     private Date createTime;
 
     /**
+     * 商品成色
+     */
+    private Integer conditions;
+
+    /**
      * 更新时间
      */
     private Date updateTime;
+
+    /**
+     * 支付方式: 1-支付宝 2-微信支付 3-银行卡
+     */
+    private Integer paymentMethod;
+
+    /**
+     * 支付状态: 1-待支付 2-支付成功 3-支付失败
+     */
+    private Integer paymentStatus;
+
+    /**
+     * 支付时间
+     */
+    private Date paymentTime;
+
+    /**
+     * 支付交易号
+     */
+    private String transactionNo;
+
+    /**
+     * 订单留言
+     */
+    private String message;
+
+    /**
+     * 是否已评价
+     */
+    private Integer isCommented;
 } 

@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS `orders`
     `payment_time`   DATETIME     DEFAULT NULL COMMENT '支付时间',
     `transaction_no` VARCHAR(64)  DEFAULT NULL COMMENT '支付交易号',
     `message`        VARCHAR(255) DEFAULT NULL COMMENT '订单留言',
+    `is_commented`  TINYINT(1)   DEFAULT 0 COMMENT '是否已评价',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_order_no` (`order_no`),
     KEY `idx_buyer_id` (`buyer_id`),
