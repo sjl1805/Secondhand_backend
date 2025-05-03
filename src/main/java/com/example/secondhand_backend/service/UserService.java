@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
 import com.example.secondhand_backend.model.dto.UserInfoDTO;
+import com.example.secondhand_backend.model.dto.PasswordUpdateDTO;
 import com.example.secondhand_backend.model.entity.User;
 
 import java.util.List;
@@ -49,6 +50,13 @@ public interface UserService extends IService<User> {
      * 更新用户信息
      */
     void updateUserInfo(Long userId, UserInfoDTO userInfoDTO);
+
+    /**
+     * 修改密码
+     * @param userId 用户ID
+     * @param passwordUpdateDTO 修改密码数据
+     */
+    void updatePassword(Long userId, PasswordUpdateDTO passwordUpdateDTO);
 
     /**
      * 管理员分页查询用户列表

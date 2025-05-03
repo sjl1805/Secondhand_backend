@@ -110,4 +110,12 @@ public interface StatisticsService {
      * @return 包含买家ID、昵称、下单次数、下单金额等信息的列表
      */
     List<Map<String, Object>> getActiveBuyersStatistics(int limit);
+
+    /**
+     * 获取商品评分统计
+     *
+     * @param productId 商品ID
+     * @return 包含评分等级(1-5)和对应评论数量的Map
+     */
+    Map<String, Integer> getProductRatingStatistics(Long productId);
 } 

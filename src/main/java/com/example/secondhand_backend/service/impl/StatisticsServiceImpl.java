@@ -33,13 +33,8 @@ public class StatisticsServiceImpl implements StatisticsService {
     private CategoryMapper categoryMapper;
 
     @Autowired
-    private FavoriteMapper favoriteMapper;
-
-    @Autowired
     private CommentMapper commentMapper;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @Override
     public Map<String, Object> getBasicStatistics() {
@@ -96,23 +91,18 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getUserRegisterStatistics(Date startDate, Date endDate, String timeUnit) {
-        // 转换为sql查询
-        String sqlFormat = determineSqlDateFormat(timeUnit);
-        String sql = "SELECT " +
-                "DATE_FORMAT(create_time, '" + sqlFormat + "') as time_period, " +
-                "COUNT(id) as count " +
-                "FROM user " +
-                "WHERE deleted = 0 " +
-                "AND create_time BETWEEN ? AND ? " +
-                "GROUP BY time_period " +
-                "ORDER BY time_period";
-
-        return jdbcTemplate.queryForList(sql, startDate, endDate)
-                .stream()
+        // 根据时间单位确定日期格式
+        String dateFormat = determineSqlDateFormat(timeUnit);
+        
+        // 使用UserMapper接口方法获取用户注册统计
+        List<Map<String, Object>> results = userMapper.getUserRegisterStatistics(startDate, endDate, dateFormat);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("timePeriod", row.get("time_period"));
-                    map.put("count", row.get("count"));
+                    map.put("date", row.get("time_period")); 
+                    map.put("value", row.get("count"));
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -120,23 +110,18 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getOrderStatistics(Date startDate, Date endDate, String timeUnit) {
-        // 转换为sql查询
-        String sqlFormat = determineSqlDateFormat(timeUnit);
-        String sql = "SELECT " +
-                "DATE_FORMAT(create_time, '" + sqlFormat + "') as time_period, " +
-                "COUNT(id) as count " +
-                "FROM orders " +
-                "WHERE deleted = 0 " +
-                "AND create_time BETWEEN ? AND ? " +
-                "GROUP BY time_period " +
-                "ORDER BY time_period";
-
-        return jdbcTemplate.queryForList(sql, startDate, endDate)
-                .stream()
+        // 根据时间单位确定日期格式
+        String dateFormat = determineSqlDateFormat(timeUnit);
+        
+        // 使用OrdersMapper接口方法获取订单统计
+        List<Map<String, Object>> results = ordersMapper.getOrderStatistics(startDate, endDate, dateFormat);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("timePeriod", row.get("time_period"));
-                    map.put("count", row.get("count"));
+                    map.put("date", row.get("time_period"));
+                    map.put("value", row.get("count"));
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -144,24 +129,18 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getTransactionStatistics(Date startDate, Date endDate, String timeUnit) {
-        // 转换为sql查询，只计算已完成订单（状态为4）
-        String sqlFormat = determineSqlDateFormat(timeUnit);
-        String sql = "SELECT " +
-                "DATE_FORMAT(create_time, '" + sqlFormat + "') as time_period, " +
-                "SUM(price) as amount " +
-                "FROM orders " +
-                "WHERE deleted = 0 " +
-                "AND status = 4 " + // 已完成订单
-                "AND create_time BETWEEN ? AND ? " +
-                "GROUP BY time_period " +
-                "ORDER BY time_period";
-
-        return jdbcTemplate.queryForList(sql, startDate, endDate)
-                .stream()
+        // 根据时间单位确定日期格式
+        String dateFormat = determineSqlDateFormat(timeUnit);
+        
+        // 使用OrdersMapper接口方法获取交易额统计
+        List<Map<String, Object>> results = ordersMapper.getTransactionStatistics(startDate, endDate, dateFormat);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("timePeriod", row.get("time_period"));
-                    map.put("amount", row.get("amount"));
+                    map.put("date", row.get("time_period"));
+                    map.put("value", row.get("amount"));
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -169,16 +148,11 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getCategoryProductStatistics() {
-        String sql = "SELECT " +
-                "c.id, c.name, " +
-                "COUNT(p.id) as product_count " +
-                "FROM category c " +
-                "LEFT JOIN product p ON c.id = p.category_id AND p.deleted = 0 " +
-                "GROUP BY c.id, c.name " +
-                "ORDER BY product_count DESC";
-
-        return jdbcTemplate.queryForList(sql)
-                .stream()
+        // 使用CategoryMapper接口方法获取分类商品统计
+        List<Map<String, Object>> results = categoryMapper.getCategoryProductStatistics();
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("categoryId", row.get("id"));
@@ -192,47 +166,98 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     public List<Map<String, Object>> getUserActivityStatistics(Date startDate, Date endDate, String timeUnit) {
         // 用户活跃度统计（通过订单和评论数量）
-        String sqlFormat = determineSqlDateFormat(timeUnit);
+        String dateFormat = determineSqlDateFormat(timeUnit);
 
-        String sql = "SELECT " +
-                "DATE_FORMAT(time_date, '" + sqlFormat + "') as time_period, " +
-                "COUNT(DISTINCT user_id) as active_users " +
-                "FROM ( " +
-                "  SELECT buyer_id as user_id, create_time as time_date FROM orders WHERE deleted = 0 AND create_time BETWEEN ? AND ? " +
-                "  UNION ALL " +
-                "  SELECT seller_id as user_id, create_time as time_date FROM orders WHERE deleted = 0 AND create_time BETWEEN ? AND ? " +
-                "  UNION ALL " +
-                "  SELECT user_id, create_time as time_date FROM comment WHERE deleted = 0 AND create_time BETWEEN ? AND ? " +
-                ") as user_activities " +
-                "GROUP BY time_period " +
-                "ORDER BY time_period";
+        // 获取不同来源的用户活跃度数据
+        List<Map<String, Object>> buyerActivities = ordersMapper.getUserActivityByBuyerStatistics(startDate, endDate, dateFormat);
+        List<Map<String, Object>> sellerActivities = ordersMapper.getUserActivityBySellerStatistics(startDate, endDate, dateFormat);
+        List<Map<String, Object>> commentActivities = commentMapper.getUserActivityByCommentStatistics(startDate, endDate, dateFormat);
 
-        return jdbcTemplate.queryForList(sql, startDate, endDate, startDate, endDate, startDate, endDate)
-                .stream()
-                .map(row -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("timePeriod", row.get("time_period"));
-                    map.put("activeUsers", row.get("active_users"));
-                    return map;
-                })
-                .collect(Collectors.toList());
+        // 合并结果并按时间段汇总
+        Map<String, Integer> consolidatedMap = new HashMap<>();
+        
+        // 处理买家活跃数据
+        for (Map<String, Object> row : buyerActivities) {
+            String timePeriod = (String) row.get("time_period");
+            Object activeUsersObj = row.get("active_users");
+            int activeUsers = 0;
+            if (activeUsersObj instanceof Number) {
+                activeUsers = ((Number) activeUsersObj).intValue();
+            } else if (activeUsersObj != null) {
+                activeUsers = Integer.parseInt(activeUsersObj.toString());
+            }
+            consolidatedMap.put(timePeriod, consolidatedMap.getOrDefault(timePeriod, 0) + activeUsers);
+        }
+        
+        // 处理卖家活跃数据
+        for (Map<String, Object> row : sellerActivities) {
+            String timePeriod = (String) row.get("time_period");
+            Object activeUsersObj = row.get("active_users");
+            int activeUsers = 0;
+            if (activeUsersObj instanceof Number) {
+                activeUsers = ((Number) activeUsersObj).intValue();
+            } else if (activeUsersObj != null) {
+                activeUsers = Integer.parseInt(activeUsersObj.toString());
+            }
+            consolidatedMap.put(timePeriod, consolidatedMap.getOrDefault(timePeriod, 0) + activeUsers);
+        }
+        
+        // 处理评论活跃数据
+        for (Map<String, Object> row : commentActivities) {
+            String timePeriod = (String) row.get("time_period");
+            Object activeUsersObj = row.get("active_users");
+            int activeUsers = 0;
+            if (activeUsersObj instanceof Number) {
+                activeUsers = ((Number) activeUsersObj).intValue();
+            } else if (activeUsersObj != null) {
+                activeUsers = Integer.parseInt(activeUsersObj.toString());
+            }
+            consolidatedMap.put(timePeriod, consolidatedMap.getOrDefault(timePeriod, 0) + activeUsers);
+        }
+        
+        // 转换为结果列表
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : consolidatedMap.entrySet()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("timePeriod", entry.getKey());
+            map.put("activeUsers", entry.getValue());
+            result.add(map);
+        }
+        
+        // 按时间段排序
+        result.sort(Comparator.comparing(map -> (String) map.get("timePeriod")));
+        
+        return result;
     }
 
     @Override
     public Map<String, Integer> getProductStatusStatistics() {
         Map<String, Integer> result = new HashMap<>();
 
-        // 统计各状态商品数量
-        String sql = "SELECT " +
-                "status, COUNT(id) as count " +
-                "FROM product " +
-                "WHERE deleted = 0 " +
-                "GROUP BY status";
-
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+        // 使用ProductMapper接口方法获取商品状态统计
+        List<Map<String, Object>> rows = productMapper.getProductStatusStatistics();
         for (Map<String, Object> row : rows) {
-            int status = ((Number) row.get("status")).intValue();
-            int count = ((Number) row.get("count")).intValue();
+            // 安全地转换status
+            Object statusObj = row.get("status");
+            int status = 0;
+            if (statusObj instanceof Number) {
+                status = ((Number) statusObj).intValue();
+            } else if (statusObj instanceof Boolean) {
+                status = ((Boolean) statusObj) ? 1 : 0;
+            } else if (statusObj != null) {
+                status = Integer.parseInt(statusObj.toString());
+            }
+            
+            // 安全地转换count
+            Object countObj = row.get("count");
+            int count = 0;
+            if (countObj instanceof Number) {
+                count = ((Number) countObj).intValue();
+            } else if (countObj instanceof Boolean) {
+                count = ((Boolean) countObj) ? 1 : 0;
+            } else if (countObj != null) {
+                count = Integer.parseInt(countObj.toString());
+            }
 
             switch (status) {
                 case 1:
@@ -257,17 +282,30 @@ public class StatisticsServiceImpl implements StatisticsService {
     public Map<String, Integer> getOrderStatusStatistics() {
         Map<String, Integer> result = new HashMap<>();
 
-        // 统计各状态订单数量
-        String sql = "SELECT " +
-                "status, COUNT(id) as count " +
-                "FROM orders " +
-                "WHERE deleted = 0 " +
-                "GROUP BY status";
-
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+        // 使用OrdersMapper接口方法获取订单状态统计
+        List<Map<String, Object>> rows = ordersMapper.getOrderStatusStatistics();
         for (Map<String, Object> row : rows) {
-            int status = ((Number) row.get("status")).intValue();
-            int count = ((Number) row.get("count")).intValue();
+            // 安全地转换status
+            Object statusObj = row.get("status");
+            int status = 0;
+            if (statusObj instanceof Number) {
+                status = ((Number) statusObj).intValue();
+            } else if (statusObj instanceof Boolean) {
+                status = ((Boolean) statusObj) ? 1 : 0;
+            } else if (statusObj != null) {
+                status = Integer.parseInt(statusObj.toString());
+            }
+            
+            // 安全地转换count
+            Object countObj = row.get("count");
+            int count = 0;
+            if (countObj instanceof Number) {
+                count = ((Number) countObj).intValue();
+            } else if (countObj instanceof Boolean) {
+                count = ((Boolean) countObj) ? 1 : 0;
+            } else if (countObj != null) {
+                count = Integer.parseInt(countObj.toString());
+            }
 
             switch (status) {
                 case 1:
@@ -296,35 +334,22 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public BigDecimal getPlatformIncome(Date startDate, Date endDate) {
-        // 假设平台收入为交易额的3%
-        String sql = "SELECT " +
-                "SUM(price) * 0.03 as platform_income " +
-                "FROM orders " +
-                "WHERE deleted = 0 " +
-                "AND status = 4 " + // 已完成订单
-                "AND create_time BETWEEN ? AND ?";
-
-        BigDecimal income = jdbcTemplate.queryForObject(sql, BigDecimal.class, startDate, endDate);
+        // 使用OrdersMapper接口方法计算平台收入
+        BigDecimal income = ordersMapper.getPlatformIncome(startDate, endDate);
         return income != null ? income : BigDecimal.ZERO;
     }
 
     @Override
     public List<Map<String, Object>> getHotProductsStatistics(int limit) {
-        // 热门商品统计（基于浏览次数和收藏数）
-        String sql = "SELECT " +
-                "p.id, p.title, p.view_count, " +
-                "(SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) as favorite_count, " +
-                "p.price, p.status, u.nickname as seller_name " +
-                "FROM product p " +
-                "LEFT JOIN user u ON p.user_id = u.id " +
-                "WHERE p.deleted = 0 " +
-                "ORDER BY (p.view_count + (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) * 2) DESC " + // 浏览量 + 收藏数*2 作为热度指标
-                "LIMIT ?";
-
-        return jdbcTemplate.queryForList(sql, limit)
-                .stream()
+        // 使用ProductMapper接口方法获取热门商品统计
+        List<Map<String, Object>> results = productMapper.getHotProductsStatistics(limit);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
+                    // 添加排名属性
+                    map.put("rank", results.indexOf(row) + 1);
                     map.put("productId", row.get("id"));
                     map.put("title", row.get("title"));
                     map.put("viewCount", row.get("view_count"));
@@ -339,22 +364,15 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getActiveSellersStatistics(int limit) {
-        // 活跃卖家统计（基于发布商品数和成交订单数）
-        String sql = "SELECT " +
-                "u.id, u.nickname, u.avatar, " +
-                "(SELECT COUNT(*) FROM product p WHERE p.user_id = u.id AND p.deleted = 0) as product_count, " +
-                "(SELECT COUNT(*) FROM orders o WHERE o.seller_id = u.id AND o.status = 4 AND o.deleted = 0) as completed_order_count, " +
-                "(SELECT SUM(o.price) FROM orders o WHERE o.seller_id = u.id AND o.status = 4 AND o.deleted = 0) as total_sales " +
-                "FROM user u " +
-                "WHERE u.deleted = 0 " +
-                "HAVING product_count > 0 OR completed_order_count > 0 " +
-                "ORDER BY (product_count + completed_order_count * 2) DESC " + // 商品数 + 成交订单数*2 作为活跃度指标
-                "LIMIT ?";
-
-        return jdbcTemplate.queryForList(sql, limit)
-                .stream()
+        // 使用UserMapper接口方法获取活跃卖家统计
+        List<Map<String, Object>> results = userMapper.getActiveSellersStatistics(limit);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
+                    // 添加排名属性
+                    map.put("rank", results.indexOf(row) + 1);
                     map.put("sellerId", row.get("id"));
                     map.put("nickname", row.get("nickname"));
                     map.put("avatar", row.get("avatar"));
@@ -368,22 +386,15 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<Map<String, Object>> getActiveBuyersStatistics(int limit) {
-        // 活跃买家统计（基于下单次数和下单金额）
-        String sql = "SELECT " +
-                "u.id, u.nickname, u.avatar, " +
-                "COUNT(o.id) as order_count, " +
-                "SUM(o.price) as total_spent " +
-                "FROM user u " +
-                "JOIN orders o ON u.id = o.buyer_id " +
-                "WHERE u.deleted = 0 AND o.deleted = 0 " +
-                "GROUP BY u.id, u.nickname, u.avatar " +
-                "ORDER BY order_count DESC, total_spent DESC " +
-                "LIMIT ?";
-
-        return jdbcTemplate.queryForList(sql, limit)
-                .stream()
+        // 使用UserMapper接口方法获取活跃买家统计
+        List<Map<String, Object>> results = userMapper.getActiveBuyersStatistics(limit);
+        
+        // 转换结果格式
+        return results.stream()
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
+                    // 添加排名属性
+                    map.put("rank", results.indexOf(row) + 1);
                     map.put("buyerId", row.get("id"));
                     map.put("nickname", row.get("nickname"));
                     map.put("avatar", row.get("avatar"));
@@ -392,6 +403,45 @@ public class StatisticsServiceImpl implements StatisticsService {
                     return map;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Integer> getProductRatingStatistics(Long productId) {
+        // 使用CommentMapper接口方法获取商品评分统计
+        List<Map<String, Object>> results = commentMapper.getProductRatingStatistics(productId);
+        
+        // 转换结果格式
+        Map<String, Integer> ratingMap = new HashMap<>();
+        
+        // 初始化所有评分为0
+        for (int i = 1; i <= 5; i++) {
+            ratingMap.put(String.valueOf(i), 0);
+        }
+        
+        // 填充实际评分数据
+        for (Map<String, Object> row : results) {
+            // 安全地转换rating
+            Object ratingObj = row.get("rating");
+            int rating = 0;
+            if (ratingObj instanceof Number) {
+                rating = ((Number) ratingObj).intValue();
+            } else if (ratingObj != null) {
+                rating = Integer.parseInt(ratingObj.toString());
+            }
+            
+            // 安全地转换count
+            Object countObj = row.get("count");
+            int count = 0;
+            if (countObj instanceof Number) {
+                count = ((Number) countObj).intValue();
+            } else if (countObj != null) {
+                count = Integer.parseInt(countObj.toString());
+            }
+            
+            ratingMap.put(String.valueOf(rating), count);
+        }
+        
+        return ratingMap;
     }
 
     /**
@@ -419,8 +469,8 @@ public class StatisticsServiceImpl implements StatisticsService {
      * @return 交易总额
      */
     private BigDecimal calculateTotalTransactionAmount() {
-        String sql = "SELECT SUM(price) FROM orders WHERE deleted = 0 AND status = 4";
-        BigDecimal total = jdbcTemplate.queryForObject(sql, BigDecimal.class);
+        // 使用OrdersMapper接口方法计算总交易额
+        BigDecimal total = ordersMapper.calculateTotalTransactionAmount();
         return total != null ? total : BigDecimal.ZERO;
     }
 
@@ -442,8 +492,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         calendar.set(Calendar.SECOND, 59);
         Date endTime = calendar.getTime();
 
-        String sql = "SELECT COUNT(*) FROM user WHERE deleted = 0 AND create_time BETWEEN ? AND ?";
-        return jdbcTemplate.queryForObject(sql, Integer.class, startTime, endTime);
+        // 使用UserMapper接口方法统计今日新增用户数
+        return userMapper.countTodayNewUsers(startTime, endTime);
     }
 
     /**
@@ -464,8 +514,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         calendar.set(Calendar.SECOND, 59);
         Date endTime = calendar.getTime();
 
-        String sql = "SELECT COUNT(*) FROM orders WHERE deleted = 0 AND create_time BETWEEN ? AND ?";
-        return jdbcTemplate.queryForObject(sql, Integer.class, startTime, endTime);
+        // 使用OrdersMapper接口方法统计今日新增订单数
+        return ordersMapper.countTodayNewOrders(startTime, endTime);
     }
 
     /**
@@ -486,7 +536,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         calendar.set(Calendar.SECOND, 59);
         Date endTime = calendar.getTime();
 
-        String sql = "SELECT COUNT(*) FROM product WHERE deleted = 0 AND create_time BETWEEN ? AND ?";
-        return jdbcTemplate.queryForObject(sql, Integer.class, startTime, endTime);
+        // 使用ProductMapper接口方法统计今日新增商品数
+        return productMapper.countTodayNewProducts(startTime, endTime);
     }
 } 

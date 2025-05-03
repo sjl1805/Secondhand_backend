@@ -5,18 +5,41 @@
 <mapper namespace="com.example.secondhand_backend.mapper.CommentMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Comment">
-        <id property="id" column="id"/>
-        <result property="orderId" column="order_id"/>
-        <result property="userId" column="user_id"/>
-        <result property="productId" column="product_id"/>
-        <result property="content" column="content"/>
-        <result property="rating" column="rating"/>
-        <result property="createTime" column="create_time"/>
-        <result property="deleted" column="deleted"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="orderId" column="order_id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="productId" column="product_id" jdbcType="BIGINT"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="rating" column="rating" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="deleted" column="deleted" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,order_id,user_id,product_id,content,rating,
+        id,order_id,user_id,
+        product_id,content,rating,
         create_time,deleted
     </sql>
+    
+    <!-- 获取用户活跃度统计数据(评论部分) -->
+    <select id="getUserActivityByCommentStatistics" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
+            COUNT(DISTINCT user_id) as active_users 
+        FROM comment 
+        WHERE deleted = 0 
+        AND create_time BETWEEN #{startDate} AND #{endDate} 
+        GROUP BY time_period 
+        ORDER BY time_period
+    </select>
+    
+    <!-- 获取商品评分统计数据 -->
+    <select id="getProductRatingStatistics" resultType="java.util.Map">
+        SELECT 
+            rating, COUNT(id) as count 
+        FROM comment 
+        WHERE deleted = 0 AND product_id = #{productId} 
+        GROUP BY rating 
+        ORDER BY rating DESC
+    </select>
 </mapper>

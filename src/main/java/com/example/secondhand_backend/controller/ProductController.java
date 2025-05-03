@@ -5,6 +5,7 @@ import com.example.secondhand_backend.model.common.Result;
 import com.example.secondhand_backend.model.dto.ProductDTO;
 import com.example.secondhand_backend.model.vo.ProductVO;
 import com.example.secondhand_backend.service.ProductService;
+import com.example.secondhand_backend.service.StatisticsService;
 import com.example.secondhand_backend.utils.UserUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/product")
@@ -21,6 +23,9 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     @PostMapping
     @Operation(summary = "发布商品", description = "发布新商品")
@@ -139,5 +144,13 @@ public class ProductController {
             @Parameter(description = "商品状态：1-在售 2-已售 3-下架") @RequestParam(required = false) Integer status) {
         IPage<ProductVO> productList = productService.getSellerProducts(userId, page, size, status);
         return Result.success(productList);
+    }
+
+    @GetMapping("/{id}/rating")
+    @Operation(summary = "获取商品评分统计", description = "获取指定商品ID的评分统计数据")
+    public Result<Map<String, Integer>> getProductRatingStatistics(
+            @Parameter(description = "商品ID") @PathVariable("id") Long productId) {
+        Map<String, Integer> ratingStats = statisticsService.getProductRatingStatistics(productId);
+        return Result.success(ratingStats);
     }
 } 

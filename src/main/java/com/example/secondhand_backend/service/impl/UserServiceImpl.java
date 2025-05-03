@@ -9,6 +9,7 @@ import com.example.secondhand_backend.mapper.UserMapper;
 import com.example.secondhand_backend.model.dto.LoginDTO;
 import com.example.secondhand_backend.model.dto.RegisterDTO;
 import com.example.secondhand_backend.model.dto.UserInfoDTO;
+import com.example.secondhand_backend.model.dto.PasswordUpdateDTO;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.CaptchaUtils;
@@ -109,6 +110,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         BeanUtils.copyProperties(userInfoDTO, user);
+        updateById(user);
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(Long userId, PasswordUpdateDTO passwordUpdateDTO) {
+        // 获取用户信息
+        User user = getById(userId);
+        if (user == null) {
+            throw BusinessException.usernameOrPasswordError();
+        }
+
+        // 校验旧密码
+        if (!MD5Utils.verify(passwordUpdateDTO.getOldPassword(), user.getPassword())) {
+            throw new BusinessException("旧密码不正确");
+        }
+
+        // 新密码不能与旧密码相同
+        if (passwordUpdateDTO.getOldPassword().equals(passwordUpdateDTO.getNewPassword())) {
+            throw new BusinessException("新密码不能与旧密码相同");
+        }
+
+        // 更新密码
+        user.setPassword(MD5Utils.encrypt(passwordUpdateDTO.getNewPassword()));
         updateById(user);
     }
 

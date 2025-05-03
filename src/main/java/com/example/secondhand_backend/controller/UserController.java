@@ -2,6 +2,7 @@ package com.example.secondhand_backend.controller;
 
 import com.example.secondhand_backend.model.common.Result;
 import com.example.secondhand_backend.model.dto.UserInfoDTO;
+import com.example.secondhand_backend.model.dto.PasswordUpdateDTO;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.UserUtils;
@@ -31,6 +32,14 @@ public class UserController {
     public Result<Void> updateUserInfo(@RequestBody UserInfoDTO userInfoDTO) {
         Long userId = UserUtils.getCurrentUserId();
         userService.updateUserInfo(userId, userInfoDTO);
+        return Result.success();
+    }
+
+    @PutMapping("/password")
+    @Operation(summary = "修改密码", description = "修改当前登录用户的密码")
+    public Result<Void> updatePassword(@RequestBody PasswordUpdateDTO passwordUpdateDTO) {
+        Long userId = UserUtils.getCurrentUserId();
+        userService.updatePassword(userId, passwordUpdateDTO);
         return Result.success();
     }
 

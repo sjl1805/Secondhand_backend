@@ -42,6 +42,11 @@ public class ProductVO {
     private String description;
 
     /**
+     * 商品成色
+     */
+    private Integer conditions;
+
+    /**
      * 价格
      */
     private BigDecimal price;

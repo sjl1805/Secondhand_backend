@@ -5,22 +5,55 @@
 <mapper namespace="com.example.secondhand_backend.mapper.ProductMapper">
 
     <resultMap id="BaseResultMap" type="com.example.secondhand_backend.model.entity.Product">
-        <id property="id" column="id"/>
-        <result property="userId" column="user_id"/>
-        <result property="title" column="title"/>
-        <result property="description" column="description"/>
-        <result property="price" column="price"/>
-        <result property="categoryId" column="category_id"/>
-        <result property="status" column="status"/>
-        <result property="conditions" column="condition"/>
-        <result property="viewCount" column="view_count"/>
-        <result property="createTime" column="create_time"/>
-        <result property="updateTime" column="update_time"/>
-        <result property="deleted" column="deleted"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="description" column="description" jdbcType="VARCHAR"/>
+        <result property="price" column="price" jdbcType="DECIMAL"/>
+        <result property="categoryId" column="category_id" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="conditions" column="condition" jdbcType="TINYINT"/>
+        <result property="viewCount" column="view_count" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="deleted" column="deleted" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,user_id,title,description,price,category_id,
-        conditions,status,view_count,create_time,update_time,deleted
+        id,user_id,title,
+        description,price,category_id,
+        conditions,status,view_count,
+        create_time,update_time,deleted
     </sql>
+
+    <!-- 获取商品状态统计 -->
+    <select id="getProductStatusStatistics" resultType="java.util.Map">
+        SELECT 
+            status, COUNT(id) as count 
+        FROM product 
+        WHERE deleted = 0 
+        GROUP BY status
+    </select>
+    
+    <!-- 统计今日新增商品数 -->
+    <select id="countTodayNewProducts" resultType="java.lang.Integer">
+        SELECT 
+            COUNT(*) 
+        FROM product 
+        WHERE deleted = 0 
+        AND create_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+    
+    <!-- 获取热门商品统计数据 -->
+    <select id="getHotProductsStatistics" resultType="java.util.Map">
+        SELECT 
+            p.id, p.title, p.view_count, 
+            (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) as favorite_count, 
+            p.price, p.status, u.nickname as seller_name 
+        FROM product p 
+        LEFT JOIN user u ON p.user_id = u.id 
+        WHERE p.deleted = 0 
+        ORDER BY (p.view_count + (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) * 2) DESC 
+        LIMIT #{limit}
+    </select>
 </mapper>

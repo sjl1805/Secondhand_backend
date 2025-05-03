@@ -199,4 +199,17 @@ public class AdminStatisticsController {
         List<Map<String, Object>> statistics = statisticsService.getActiveBuyersStatistics(limit);
         return Result.success(statistics);
     }
+
+    @GetMapping("/product/rating")
+    @Operation(summary = "获取商品评分统计数据", description = "获取商品评分统计数据")
+    public Result<Map<String, Integer>> getProductRatingStatistics(
+            @Parameter(description = "商品ID") @RequestParam Long productId) {
+        // 验证管理员权限
+        if (!validateAdminRole()) {
+            return Result.error("无权限执行此操作，需要管理员权限");
+        }
+
+        Map<String, Integer> statistics = statisticsService.getProductRatingStatistics(productId);
+        return Result.success(statistics);
+    }
 } 
