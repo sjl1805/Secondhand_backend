@@ -40,25 +40,6 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         implements ProductService {
 
-    @Autowired
-    private ProductImageService productImageService;
-
-    @Autowired
-    private CategoryMapper categoryMapper;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    @Lazy
-    private FavoriteService favoriteService;
-
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
     private static final String PRODUCT_CACHE_PREFIX = "product:";
     private static final String PRODUCT_LIST_CACHE_PREFIX = "product:list:";
     private static final String USER_PRODUCTS_CACHE_PREFIX = "product:user:";
@@ -69,6 +50,19 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     private static final String ADVANCED_SEARCH_CACHE_PREFIX = "product:search:";
     private static final String SELLER_PRODUCTS_CACHE_PREFIX = "product:seller:";
     private static final long CACHE_EXPIRE_TIME = 12; // 缓存过期时间（小时）
+    @Autowired
+    private ProductImageService productImageService;
+    @Autowired
+    private CategoryMapper categoryMapper;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    @Lazy
+    private FavoriteService favoriteService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional
@@ -99,11 +93,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         // 从缓存获取
         String cacheKey = PRODUCT_CACHE_PREFIX + productId;
         ProductVO productVO = (ProductVO) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVO != null) {
             return productVO;
         }
-        
+
         // 缓存未命中，查询数据库
         // 获取商品
         Product product = getById(productId);
@@ -112,10 +106,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         }
 
         productVO = convertToProductVO(product, null);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVO;
     }
 
@@ -124,11 +118,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         // 从缓存获取
         String cacheKey = PRODUCT_CACHE_PREFIX + productId + ":" + userId;
         ProductVO productVO = (ProductVO) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVO != null) {
             return productVO;
         }
-        
+
         // 缓存未命中，查询数据库
         // 获取商品
         Product product = getById(productId);
@@ -137,10 +131,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         }
 
         productVO = convertToProductVO(product, userId);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVO;
     }
 
@@ -153,7 +147,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
             updateWrapper.eq(Product::getId, productId)
                     .set(Product::getViewCount, product.getViewCount() + 1);
             update(updateWrapper);
-            
+
             // 清除相关缓存
             clearProductCache(productId);
         }
@@ -162,17 +156,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     @Override
     public IPage<ProductVO> getProductList(int page, int size, Integer categoryId, String keyword) {
         // 构建缓存键
-        String cacheKey = PRODUCT_LIST_CACHE_PREFIX + page + ":" + size + ":" + 
-                (categoryId == null ? "all" : categoryId) + ":" + 
+        String cacheKey = PRODUCT_LIST_CACHE_PREFIX + page + ":" + size + ":" +
+                (categoryId == null ? "all" : categoryId) + ":" +
                 (keyword == null ? "all" : keyword);
-        
+
         // 从缓存获取
         IPage<ProductVO> productVOPage = (IPage<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVOPage != null) {
             return productVOPage;
         }
-        
+
         // 缓存未命中，查询数据库
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -202,10 +196,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
 
         // 转换为ProductVO
         productVOPage = convertToProductVOPage(resultPage);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVOPage;
     }
 
@@ -213,14 +207,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     public IPage<ProductVO> getUserProducts(Long userId, int page, int size) {
         // 构建缓存键
         String cacheKey = USER_PRODUCTS_CACHE_PREFIX + userId + ":" + page + ":" + size;
-        
+
         // 从缓存获取
         IPage<ProductVO> productVOPage = (IPage<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVOPage != null) {
             return productVOPage;
         }
-        
+
         // 缓存未命中，查询数据库
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -234,10 +228,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
 
         // 转换为ProductVO
         productVOPage = convertToProductVOPage(resultPage);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVOPage;
     }
 
@@ -258,10 +252,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         // 更新状态
         product.setStatus(status);
         updateById(product);
-        
+
         // 清除相关缓存
         clearProductCache(productId);
-        
+
         // 清除用户商品列表缓存
         String userProductsPattern = USER_PRODUCTS_CACHE_PREFIX + userId + "*";
         redisTemplate.delete(redisTemplate.keys(userProductsPattern));
@@ -284,14 +278,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         // 逻辑删除
         product.setDeleted(1);
         updateById(product);
-        
+
         // 清除相关缓存
         clearProductCache(productId);
-        
+
         // 清除用户商品列表缓存
         String userProductsPattern = USER_PRODUCTS_CACHE_PREFIX + userId + "*";
         redisTemplate.delete(redisTemplate.keys(userProductsPattern));
-        
+
         // 清除商品列表缓存
         redisTemplate.delete(redisTemplate.keys(PRODUCT_LIST_CACHE_PREFIX + "*"));
     }
@@ -317,17 +311,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
 
         // 更新商品信息
         BeanUtils.copyProperties(productDTO, product);
-        
+
         // 保留原有的用户ID、状态、浏览次数和删除标记
         product.setId(productId);
         product.setUserId(userId);
         product.setStatus(product.getStatus());
         product.setViewCount(product.getViewCount());
         product.setDeleted(0);
-        
+
         // 更新商品
         updateById(product);
-        
+
         // 更新商品图片
         if (productDTO.getImageUrls() != null && !productDTO.getImageUrls().isEmpty()) {
             // 先删除旧图片关联
@@ -335,14 +329,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
             // 保存新图片关联
             productImageService.saveProductImages(productId, productDTO.getImageUrls());
         }
-        
+
         // 清除相关缓存
         clearProductCache(productId);
-        
+
         // 清除用户商品列表缓存
         String userProductsPattern = USER_PRODUCTS_CACHE_PREFIX + userId + "*";
         redisTemplate.delete(redisTemplate.keys(userProductsPattern));
-        
+
         // 清除商品列表缓存
         redisTemplate.delete(redisTemplate.keys(PRODUCT_LIST_CACHE_PREFIX + "*"));
     }
@@ -621,14 +615,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     public List<ProductVO> getLatestProducts(int limit) {
         // 构建缓存键
         String cacheKey = LATEST_PRODUCTS_CACHE_KEY + limit;
-        
+
         // 从缓存获取
         List<ProductVO> productVOList = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVOList != null) {
             return productVOList;
         }
-        
+
         // 缓存未命中，查询数据库
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -644,10 +638,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         productVOList = products.stream()
                 .map(product -> convertToProductVO(product, null))
                 .collect(Collectors.toList());
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVOList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVOList;
     }
 
@@ -655,14 +649,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     public List<ProductVO> getHotProducts(int limit) {
         // 构建缓存键
         String cacheKey = HOT_PRODUCTS_CACHE_KEY + limit;
-        
+
         // 从缓存获取
         List<ProductVO> productVOList = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVOList != null) {
             return productVOList;
         }
-        
+
         // 缓存未命中，查询数据库
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -678,26 +672,26 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         productVOList = products.stream()
                 .map(product -> convertToProductVO(product, null))
                 .collect(Collectors.toList());
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVOList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVOList;
     }
 
     @Override
     public List<ProductVO> getRecommendProductsByCategory(Integer categoryId, Long productId, int limit) {
         // 构建缓存键
-        String cacheKey = RECOMMEND_PRODUCTS_CACHE_PREFIX + categoryId + ":" + 
+        String cacheKey = RECOMMEND_PRODUCTS_CACHE_PREFIX + categoryId + ":" +
                 (productId == null ? "all" : productId) + ":" + limit;
-        
+
         // 从缓存获取
         List<ProductVO> productVOList = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (productVOList != null) {
             return productVOList;
         }
-        
+
         // 缓存未命中，查询数据库
         // 创建查询条件
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
@@ -715,10 +709,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         productVOList = products.stream()
                 .map(product -> convertToProductVO(product, null))
                 .collect(Collectors.toList());
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, productVOList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return productVOList;
     }
 
@@ -806,11 +800,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
         // 清除商品详情缓存（模糊删除所有与该商品相关的缓存）
         String productCachePattern = PRODUCT_CACHE_PREFIX + productId + "*";
         redisTemplate.delete(redisTemplate.keys(productCachePattern));
-        
+
         // 清除最新商品和热门商品缓存
         redisTemplate.delete(LATEST_PRODUCTS_CACHE_KEY + "*");
         redisTemplate.delete(HOT_PRODUCTS_CACHE_KEY + "*");
-        
+
         // 清除推荐商品缓存（与该商品相关的）
         String recommendCachePattern = RECOMMEND_PRODUCTS_CACHE_PREFIX + "*" + productId + "*";
         redisTemplate.delete(redisTemplate.keys(recommendCachePattern));

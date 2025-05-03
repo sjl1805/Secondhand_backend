@@ -19,6 +19,7 @@ public interface CategoryMapper extends BaseMapper<Category> {
 
     /**
      * 获取分类商品统计数据
+     *
      * @return 包含分类名称和商品数量的列表
      */
     @Select("SELECT c.id, c.name, COUNT(p.id) as product_count " +

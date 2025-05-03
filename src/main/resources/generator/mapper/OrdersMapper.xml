@@ -32,92 +32,85 @@
         payment_status,payment_time,transaction_no,
         message,is_commented
     </sql>
-    
+
     <!-- 获取订单状态统计 -->
     <select id="getOrderStatusStatistics" resultType="java.util.Map">
-        SELECT 
-            status, COUNT(id) as count 
-        FROM orders 
+        SELECT
+        status, COUNT(id) as count
+        FROM orders
         WHERE deleted = 0
-            AND status IN (1, 2, 3, 4, 5) <!-- 只统计有效的状态: 1-待付款, 2-待发货, 3-待收货, 4-已完成, 5-已取消 -->
+        AND status IN (1, 2, 3, 4, 5) <!-- 只统计有效的状态: 1-待付款, 2-待发货, 3-待收货, 4-已完成, 5-已取消 -->
         GROUP BY status
         ORDER BY status ASC
     </select>
-    
+
     <!-- 获取订单统计数据 -->
     <select id="getOrderStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            COUNT(id) as count 
-        FROM orders 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               COUNT(id)                               as count
+        FROM orders
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
-    
+
     <!-- 获取交易额统计数据 -->
     <select id="getTransactionStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            SUM(price) as amount 
-        FROM orders 
-        WHERE deleted = 0 
-        AND status = 4 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               SUM(price)                              as amount
+        FROM orders
+        WHERE deleted = 0
+          AND status = 4
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
-    
+
     <!-- 计算平台收入 -->
     <select id="getPlatformIncome" resultType="java.math.BigDecimal">
-        SELECT 
-            SUM(price) * 0.03 as platform_income 
-        FROM orders 
-        WHERE deleted = 0 
-        AND status = 4 
-        AND create_time BETWEEN #{startDate} AND #{endDate}
+        SELECT SUM(price) * 0.03 as platform_income
+        FROM orders
+        WHERE deleted = 0
+          AND status = 4
+          AND create_time BETWEEN #{startDate} AND #{endDate}
     </select>
-    
+
     <!-- 统计今日新增订单数 -->
     <select id="countTodayNewOrders" resultType="java.lang.Integer">
-        SELECT 
-            COUNT(*) 
-        FROM orders 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startTime} AND #{endTime}
+        SELECT COUNT(*)
+        FROM orders
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startTime} AND #{endTime}
     </select>
-    
+
     <!-- 计算已完成订单的交易总额 -->
     <select id="calculateTotalTransactionAmount" resultType="java.math.BigDecimal">
-        SELECT 
-            SUM(price) 
-        FROM orders 
-        WHERE deleted = 0 
-        AND status = 4
+        SELECT SUM(price)
+        FROM orders
+        WHERE deleted = 0
+          AND status = 4
     </select>
-    
+
     <!-- 获取用户活跃度统计数据(买家部分) -->
     <select id="getUserActivityByBuyerStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            COUNT(DISTINCT buyer_id) as active_users 
-        FROM orders 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               COUNT(DISTINCT buyer_id)                as active_users
+        FROM orders
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
-    
+
     <!-- 获取用户活跃度统计数据(卖家部分) -->
     <select id="getUserActivityBySellerStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            COUNT(DISTINCT seller_id) as active_users 
-        FROM orders 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               COUNT(DISTINCT seller_id)               as active_users
+        FROM orders
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
 </mapper>

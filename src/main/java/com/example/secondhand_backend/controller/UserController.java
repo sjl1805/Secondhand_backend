@@ -1,8 +1,8 @@
 package com.example.secondhand_backend.controller;
 
 import com.example.secondhand_backend.model.common.Result;
-import com.example.secondhand_backend.model.dto.UserInfoDTO;
 import com.example.secondhand_backend.model.dto.PasswordUpdateDTO;
+import com.example.secondhand_backend.model.dto.UserInfoDTO;
 import com.example.secondhand_backend.model.entity.User;
 import com.example.secondhand_backend.service.UserService;
 import com.example.secondhand_backend.utils.UserUtils;

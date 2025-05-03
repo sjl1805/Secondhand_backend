@@ -23,13 +23,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         implements AddressService {
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    
+
     private static final String ADDRESS_CACHE_PREFIX = "address:";
     private static final String USER_ADDRESSES_CACHE_PREFIX = "user:addresses:";
     private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public Long addAddress(Address address) {
@@ -38,10 +37,10 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
             resetOtherDefaultAddress(address.getUserId());
         }
         save(address);
-        
+
         // 清除该用户地址列表缓存
         clearUserAddressesCache(address.getUserId());
-        
+
         return address.getId();
     }
 
@@ -50,11 +49,11 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         // 先从缓存获取
         String cacheKey = USER_ADDRESSES_CACHE_PREFIX + userId;
         List<Address> addresses = (List<Address>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (addresses != null) {
             return addresses;
         }
-        
+
         // 缓存未命中，查询数据库
         LambdaQueryWrapper<Address> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Address::getUserId, userId)
@@ -62,10 +61,10 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
                 .orderByDesc(Address::getIsDefault)
                 .orderByDesc(Address::getUpdateTime);
         addresses = list(queryWrapper);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, addresses, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return addresses;
     }
 
@@ -74,20 +73,20 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         // 先从缓存获取
         String cacheKey = ADDRESS_CACHE_PREFIX + addressId;
         Address address = (Address) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (address != null) {
             return address;
         }
-        
+
         // 缓存未命中，查询数据库
         address = getById(addressId);
         if (address == null || address.getDeleted() == 1) {
             throw new BusinessException("地址不存在");
         }
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, address, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return address;
     }
 
@@ -105,11 +104,11 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         }
 
         updateById(address);
-        
+
         // 更新缓存
         String cacheKey = ADDRESS_CACHE_PREFIX + address.getId();
         redisTemplate.opsForValue().set(cacheKey, address, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         // 清除该用户地址列表缓存
         clearUserAddressesCache(address.getUserId());
     }
@@ -129,11 +128,11 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         // 逻辑删除
         address.setDeleted(1);
         updateById(address);
-        
+
         // 删除缓存
         String cacheKey = ADDRESS_CACHE_PREFIX + addressId;
         redisTemplate.delete(cacheKey);
-        
+
         // 清除该用户地址列表缓存
         clearUserAddressesCache(userId);
     }
@@ -158,11 +157,11 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
         // 设置当前地址为默认
         address.setIsDefault(1);
         updateById(address);
-        
+
         // 更新缓存
         String cacheKey = ADDRESS_CACHE_PREFIX + addressId;
         redisTemplate.opsForValue().set(cacheKey, address, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         // 清除该用户地址列表缓存
         clearUserAddressesCache(userId);
     }
@@ -179,7 +178,7 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address>
                 .set(Address::getIsDefault, 0);
         update(updateWrapper);
     }
-    
+
     /**
      * 清除用户地址列表缓存
      *

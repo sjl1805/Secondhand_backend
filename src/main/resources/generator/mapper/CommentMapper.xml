@@ -20,26 +20,26 @@
         product_id,content,rating,
         create_time,deleted
     </sql>
-    
+
     <!-- 获取用户活跃度统计数据(评论部分) -->
     <select id="getUserActivityByCommentStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            COUNT(DISTINCT user_id) as active_users 
-        FROM comment 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               COUNT(DISTINCT user_id)                 as active_users
+        FROM comment
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
-    
+
     <!-- 获取商品评分统计数据 -->
     <select id="getProductRatingStatistics" resultType="java.util.Map">
-        SELECT 
-            rating, COUNT(id) as count 
-        FROM comment 
-        WHERE deleted = 0 AND product_id = #{productId} 
-        GROUP BY rating 
+        SELECT rating,
+               COUNT(id) as count
+        FROM comment
+        WHERE deleted = 0
+          AND product_id = #{productId}
+        GROUP BY rating
         ORDER BY rating DESC
     </select>
 </mapper>

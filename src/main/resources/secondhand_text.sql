@@ -1,31 +1,54 @@
 USE secondhand;
 
 -- 生成20条普通用户数据和1条管理员数据
-INSERT INTO `user` (`username`, `password`, `nickname`, `avatar`, `phone`, `email`, `credit_score`, `role`) VALUES
-('admin', '3b32279c2483cea75a5f7c219d25a331', '系统管理员', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13800000000', 'admin@secondhand.com', 100, 9),
-('user01', '3b32279c2483cea75a5f7c219d25a331', '张三', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000001', 'user01@example.com', 98, 0),
-('user02', '3b32279c2483cea75a5f7c219d25a331', '李四', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000002', 'user02@example.com', 100, 0),
-('user03', '3b32279c2483cea75a5f7c219d25a331', '王五', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000003', 'user03@example.com', 95, 0),
-('user04', '3b32279c2483cea75a5f7c219d25a331', '赵六', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000004', 'user04@example.com', 100, 0),
-('user05', '3b32279c2483cea75a5f7c219d25a331', '小明', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000005', 'user05@example.com', 99, 0),
-('user06', '3b32279c2483cea75a5f7c219d25a331', '小红', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000006', 'user06@example.com', 100, 0),
-('user07', '3b32279c2483cea75a5f7c219d25a331', '小刚', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000007', 'user07@example.com', 100, 0),
-('user08', '3b32279c2483cea75a5f7c219d25a331', '小丽', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000008', 'user08@example.com', 92, 0),
-('user09', '3b32279c2483cea75a5f7c219d25a331', '大壮', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000009', 'user09@example.com', 100, 0),
-('user10', '3b32279c2483cea75a5f7c219d25a331', '阿强', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000010', 'user10@example.com', 97, 0),
-('user11', '3b32279c2483cea75a5f7c219d25a331', '欣欣', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000011', 'user11@example.com', 100, 0),
-('user12', '3b32279c2483cea75a5f7c219d25a331', '亮亮', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000012', 'user12@example.com', 100, 0),
-('user13', '3b32279c2483cea75a5f7c219d25a331', '婷婷', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000013', 'user13@example.com', 96, 0),
-('user14', '3b32279c2483cea75a5f7c219d25a331', '聪聪', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000014', 'user14@example.com', 100, 0),
-('user15', '3b32279c2483cea75a5f7c219d25a331', '文文', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000015', 'user15@example.com', 99, 0),
-('user16', '3b32279c2483cea75a5f7c219d25a331', '天天', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000016', 'user16@example.com', 100, 0),
-('user17', '3b32279c2483cea75a5f7c219d25a331', '小雨', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000017', 'user17@example.com', 100, 0),
-('user18', '3b32279c2483cea75a5f7c219d25a331', '明明', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000018', 'user18@example.com', 93, 0),
-('user19', '3b32279c2483cea75a5f7c219d25a331', '东东', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000019', 'user19@example.com', 100, 0),
-('user20', '3b32279c2483cea75a5f7c219d25a331', '小花', '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000020', 'user20@example.com', 98, 0);
+INSERT INTO `user` (`username`, `password`, `nickname`, `avatar`, `phone`, `email`, `credit_score`, `role`)
+VALUES ('admin', '3b32279c2483cea75a5f7c219d25a331', '系统管理员',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13800000000', 'admin@secondhand.com', 100, 9),
+       ('user01', '3b32279c2483cea75a5f7c219d25a331', '张三',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000001', 'user01@example.com', 98, 0),
+       ('user02', '3b32279c2483cea75a5f7c219d25a331', '李四',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000002', 'user02@example.com', 100, 0),
+       ('user03', '3b32279c2483cea75a5f7c219d25a331', '王五',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000003', 'user03@example.com', 95, 0),
+       ('user04', '3b32279c2483cea75a5f7c219d25a331', '赵六',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000004', 'user04@example.com', 100, 0),
+       ('user05', '3b32279c2483cea75a5f7c219d25a331', '小明',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000005', 'user05@example.com', 99, 0),
+       ('user06', '3b32279c2483cea75a5f7c219d25a331', '小红',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000006', 'user06@example.com', 100, 0),
+       ('user07', '3b32279c2483cea75a5f7c219d25a331', '小刚',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000007', 'user07@example.com', 100, 0),
+       ('user08', '3b32279c2483cea75a5f7c219d25a331', '小丽',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000008', 'user08@example.com', 92, 0),
+       ('user09', '3b32279c2483cea75a5f7c219d25a331', '大壮',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000009', 'user09@example.com', 100, 0),
+       ('user10', '3b32279c2483cea75a5f7c219d25a331', '阿强',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000010', 'user10@example.com', 97, 0),
+       ('user11', '3b32279c2483cea75a5f7c219d25a331', '欣欣',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000011', 'user11@example.com', 100, 0),
+       ('user12', '3b32279c2483cea75a5f7c219d25a331', '亮亮',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000012', 'user12@example.com', 100, 0),
+       ('user13', '3b32279c2483cea75a5f7c219d25a331', '婷婷',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000013', 'user13@example.com', 96, 0),
+       ('user14', '3b32279c2483cea75a5f7c219d25a331', '聪聪',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000014', 'user14@example.com', 100, 0),
+       ('user15', '3b32279c2483cea75a5f7c219d25a331', '文文',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000015', 'user15@example.com', 99, 0),
+       ('user16', '3b32279c2483cea75a5f7c219d25a331', '天天',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000016', 'user16@example.com', 100, 0),
+       ('user17', '3b32279c2483cea75a5f7c219d25a331', '小雨',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000017', 'user17@example.com', 100, 0),
+       ('user18', '3b32279c2483cea75a5f7c219d25a331', '明明',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000018', 'user18@example.com', 93, 0),
+       ('user19', '3b32279c2483cea75a5f7c219d25a331', '东东',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000019', 'user19@example.com', 100, 0),
+       ('user20', '3b32279c2483cea75a5f7c219d25a331', '小花',
+        '/static/images/avatar/f3cc275fafbe4fb791141a6b38baa1d5.png', '13700000020', 'user20@example.com', 98, 0);
 
 -- 生成45条地址测试数据
-INSERT INTO `address` (`user_id`, `receiver_name`, `receiver_phone`, `province`, `city`, `district`, `detail`, `is_default`) VALUES
+INSERT INTO `address` (`user_id`, `receiver_name`, `receiver_phone`, `province`, `city`, `district`, `detail`,
+                       `is_default`)
+VALUES
 -- 用户1有3个地址
 (1, '管理员', '13800000000', '北京市', '北京市', '海淀区', '中关村软件园23号楼504室', 1),
 (1, '管理员', '13800000000', '上海市', '上海市', '浦东新区', '张江高科技园区88号', 0),
@@ -93,58 +116,62 @@ INSERT INTO `address` (`user_id`, `receiver_name`, `receiver_phone`, `province`,
 (21, '小花', '13700000020', '重庆市', '重庆市', '江北区', '观音桥步行街199号', 1);
 
 -- 插入商品分类数据
-INSERT INTO `category` (`id`, `name`, `parent_id`, `sort`) VALUES
-(1, '电子产品', 0, 1),
-(2, '手机', 1, 1),
-(3, '电脑', 1, 2),
-(4, '平板', 1, 3),
-(5, '数码配件', 1, 4),
-(6, '服装', 0, 2),
-(7, '男装', 6, 1),
-(8, '女装', 6, 2),
-(9, '童装', 6, 3),
-(10, '图书', 0, 3),
-(11, '教材教辅', 10, 1),
-(12, '小说文学', 10, 2),
-(13, '生活用品', 0, 4),
-(14, '家居用品', 13, 1),
-(15, '体育用品', 0, 5);
+INSERT INTO `category` (`id`, `name`, `parent_id`, `sort`)
+VALUES (1, '电子产品', 0, 1),
+       (2, '手机', 1, 1),
+       (3, '电脑', 1, 2),
+       (4, '平板', 1, 3),
+       (5, '数码配件', 1, 4),
+       (6, '服装', 0, 2),
+       (7, '男装', 6, 1),
+       (8, '女装', 6, 2),
+       (9, '童装', 6, 3),
+       (10, '图书', 0, 3),
+       (11, '教材教辅', 10, 1),
+       (12, '小说文学', 10, 2),
+       (13, '生活用品', 0, 4),
+       (14, '家居用品', 13, 1),
+       (15, '体育用品', 0, 5);
 
 -- 生成30条商品测试数据
-INSERT INTO `product` (`user_id`, `title`, `description`, `price`, `category_id`, `status`, `product_quality`, `view_count`) VALUES
-(2, 'iPhone 13 128G 午夜色', '去年买的，九成新，没有磕碰，电池健康度90%，原装配件齐全，有发票。', 3999.00, 2, 1, 2, 120),
-(3, 'MacBook Pro 2020款', '2020年购入，i5处理器，16G内存，512G固态硬盘，使用频率不高，几乎全新。', 5999.00, 3, 1, 2, 98),
-(4, 'iPad Air 4 64G WIFI版', '去年购买，非常爱惜，无划痕，配件齐全，原装充电器，带原装保护套。', 2899.00, 4, 1, 2, 76),
-(5, 'AirPods Pro', '今年初购买，音质非常好，降噪效果出色，耳塞都已消毒。', 999.00, 5, 1, 2, 56),
-(6, '华为 MateBook 14', '2021款，i7处理器，16G内存，512G硬盘，原装充电器，成色非常好。', 4599.00, 3, 1, 3, 87),
-(7, '小米11 Ultra 256G', '顶配版本，使用半年，屏幕贴膜，带保护壳，性能强劲。', 3799.00, 2, 1, 3, 65),
-(8, '耐克 Air Jordan 1', '42码，正品保证，购买不到一个月，穿过两次，带盒子吊牌齐全。', 1299.00, 15, 1, 1, 45),
-(9, '《Java编程思想》第5版', '全新未拆封，原价119元，多买了一本。', 79.00, 11, 1, 1, 32),
-(10, 'ZARA 男士夹克', 'M码，今年新款，只穿过一次，不太合身，99新。', 399.00, 7, 1, 1, 28),
-(11, '三星 Galaxy S21', '去年旗舰机，8+256G，成色不错，电池健康，带两个保护壳。', 2999.00, 2, 1, 3, 42),
-(12, '森马休闲裤', '33码，全新带吊牌，买小了没穿过。', 99.00, 7, 1, 1, 19),
-(2, '大学高等数学教材', '高等数学第七版上下册，使用痕迹不多，无笔记。', 45.00, 11, 1, 3, 22),
-(3, '索尼 WH-1000XM4 耳机', '降噪耳机，买了几个月，音质非常好，降噪效果顶级。', 1499.00, 5, 1, 2, 54),
-(4, '安踏运动鞋', '跑步鞋，41码，买大了，只穿过两次，几乎全新。', 199.00, 15, 1, 2, 33),
-(5, 'H&M女士连衣裙', 'S码，春夏款，只穿过一次，干洗过。', 149.00, 8, 1, 2, 48),
-(6, '罗技 G502 鼠标', '游戏鼠标，手感极佳，买了新的所以出。', 249.00, 5, 1, 3, 36),
-(7, '《红楼梦》全套', '人民文学出版社，精装珍藏版，全新。', 168.00, 12, 1, 1, 29),
-(8, 'IKEA 简约台灯', '北欧风格，LED灯泡，节能环保，几乎全新。', 89.00, 14, 1, 2, 43),
-(9, 'OnePlus 9 Pro', '8+256G，松绿色，使用3个月，无划痕无磕碰，原装充电器。', 3499.00, 2, 1, 2, 67),
-(10, '优衣库男士T恤', 'L码，夏季款，穿过一次，纯棉材质，洗过一次。', 69.00, 7, 1, 2, 25),
-(11, '小米平板5 Pro', '骁龙870，6+128G，WIFI版，全新未拆封。', 1899.00, 4, 1, 1, 88),
-(12, '乐高星球大战系列', '75192千年隼，全新未拆，市场价7000+。', 5999.00, 14, 1, 1, 112),
-(13, 'RTX 3070显卡', '华硕ROG系列，购于2022年初，95新，带包装盒。', 3299.00, 5, 1, 2, 96),
-(14, '《算法导论》英文原版', '第三版，有少量铅笔记号可擦除。', 129.00, 11, 1, 3, 32),
-(15, '戴森吹风机HD03', '紫红色，正品保证，带所有配件，发票保修期内。', 1899.00, 14, 1, 2, 78),
-(16, 'Kindle Paperwhite 4', '8G版本，屏幕无划痕，电池续航良好。', 599.00, 5, 1, 3, 45),
-(17, '任天堂Switch', '红蓝手柄，港版，带两个游戏卡带，保护膜已贴好。', 1599.00, 5, 1, 3, 87),
-(18, '居家拖鞋', '冬季保暖款，40-41码，全新。', 39.00, 14, 1, 1, 18),
-(19, '古驰GG Marmont包', '正品，小号，黑色，带防尘袋和购物小票。', 9999.00, 8, 1, 2, 156),
-(20, '折叠自行车', '20寸，变速系统完好，适合通勤。', 799.00, 15, 1, 3, 65);
+INSERT INTO `product` (`user_id`, `title`, `description`, `price`, `category_id`, `status`, `product_quality`,
+                       `view_count`)
+VALUES (2, 'iPhone 13 128G 午夜色', '去年买的，九成新，没有磕碰，电池健康度90%，原装配件齐全，有发票。', 3999.00, 2, 1, 2,
+        120),
+       (3, 'MacBook Pro 2020款', '2020年购入，i5处理器，16G内存，512G固态硬盘，使用频率不高，几乎全新。', 5999.00, 3, 1, 2,
+        98),
+       (4, 'iPad Air 4 64G WIFI版', '去年购买，非常爱惜，无划痕，配件齐全，原装充电器，带原装保护套。', 2899.00, 4, 1, 2, 76),
+       (5, 'AirPods Pro', '今年初购买，音质非常好，降噪效果出色，耳塞都已消毒。', 999.00, 5, 1, 2, 56),
+       (6, '华为 MateBook 14', '2021款，i7处理器，16G内存，512G硬盘，原装充电器，成色非常好。', 4599.00, 3, 1, 3, 87),
+       (7, '小米11 Ultra 256G', '顶配版本，使用半年，屏幕贴膜，带保护壳，性能强劲。', 3799.00, 2, 1, 3, 65),
+       (8, '耐克 Air Jordan 1', '42码，正品保证，购买不到一个月，穿过两次，带盒子吊牌齐全。', 1299.00, 15, 1, 1, 45),
+       (9, '《Java编程思想》第5版', '全新未拆封，原价119元，多买了一本。', 79.00, 11, 1, 1, 32),
+       (10, 'ZARA 男士夹克', 'M码，今年新款，只穿过一次，不太合身，99新。', 399.00, 7, 1, 1, 28),
+       (11, '三星 Galaxy S21', '去年旗舰机，8+256G，成色不错，电池健康，带两个保护壳。', 2999.00, 2, 1, 3, 42),
+       (12, '森马休闲裤', '33码，全新带吊牌，买小了没穿过。', 99.00, 7, 1, 1, 19),
+       (2, '大学高等数学教材', '高等数学第七版上下册，使用痕迹不多，无笔记。', 45.00, 11, 1, 3, 22),
+       (3, '索尼 WH-1000XM4 耳机', '降噪耳机，买了几个月，音质非常好，降噪效果顶级。', 1499.00, 5, 1, 2, 54),
+       (4, '安踏运动鞋', '跑步鞋，41码，买大了，只穿过两次，几乎全新。', 199.00, 15, 1, 2, 33),
+       (5, 'H&M女士连衣裙', 'S码，春夏款，只穿过一次，干洗过。', 149.00, 8, 1, 2, 48),
+       (6, '罗技 G502 鼠标', '游戏鼠标，手感极佳，买了新的所以出。', 249.00, 5, 1, 3, 36),
+       (7, '《红楼梦》全套', '人民文学出版社，精装珍藏版，全新。', 168.00, 12, 1, 1, 29),
+       (8, 'IKEA 简约台灯', '北欧风格，LED灯泡，节能环保，几乎全新。', 89.00, 14, 1, 2, 43),
+       (9, 'OnePlus 9 Pro', '8+256G，松绿色，使用3个月，无划痕无磕碰，原装充电器。', 3499.00, 2, 1, 2, 67),
+       (10, '优衣库男士T恤', 'L码，夏季款，穿过一次，纯棉材质，洗过一次。', 69.00, 7, 1, 2, 25),
+       (11, '小米平板5 Pro', '骁龙870，6+128G，WIFI版，全新未拆封。', 1899.00, 4, 1, 1, 88),
+       (12, '乐高星球大战系列', '75192千年隼，全新未拆，市场价7000+。', 5999.00, 14, 1, 1, 112),
+       (13, 'RTX 3070显卡', '华硕ROG系列，购于2022年初，95新，带包装盒。', 3299.00, 5, 1, 2, 96),
+       (14, '《算法导论》英文原版', '第三版，有少量铅笔记号可擦除。', 129.00, 11, 1, 3, 32),
+       (15, '戴森吹风机HD03', '紫红色，正品保证，带所有配件，发票保修期内。', 1899.00, 14, 1, 2, 78),
+       (16, 'Kindle Paperwhite 4', '8G版本，屏幕无划痕，电池续航良好。', 599.00, 5, 1, 3, 45),
+       (17, '任天堂Switch', '红蓝手柄，港版，带两个游戏卡带，保护膜已贴好。', 1599.00, 5, 1, 3, 87),
+       (18, '居家拖鞋', '冬季保暖款，40-41码，全新。', 39.00, 14, 1, 1, 18),
+       (19, '古驰GG Marmont包', '正品，小号，黑色，带防尘袋和购物小票。', 9999.00, 8, 1, 2, 156),
+       (20, '折叠自行车', '20寸，变速系统完好，适合通勤。', 799.00, 15, 1, 3, 65);
 
 -- 为商品图片表添加45条测试数据
-INSERT INTO `product_image` (`product_id`, `image_url`, `sort`) VALUES
+INSERT INTO `product_image` (`product_id`, `image_url`, `sort`)
+VALUES
 -- 商品1的图片（3张）
 (1, '/static/images/products/10077f53cf0e429f841c67f5aa2a9bfa.jpg', 0),
 (1, '/static/images/products/10077f53cf0e429f841c67f5aa2a9bfa.jpg', 1),
@@ -221,7 +248,8 @@ INSERT INTO `product_image` (`product_id`, `image_url`, `sort`) VALUES
 (30, '/static/images/products/10077f53cf0e429f841c67f5aa2a9bfa.jpg', 0);
 
 -- 生成60条收藏表测试数据
-INSERT INTO `favorite` (`user_id`, `product_id`) VALUES
+INSERT INTO `favorite` (`user_id`, `product_id`)
+VALUES
 -- 用户1收藏了6个商品
 (1, 1),
 (1, 5),

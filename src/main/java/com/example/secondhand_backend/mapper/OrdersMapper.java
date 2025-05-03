@@ -22,15 +22,17 @@ public interface OrdersMapper extends BaseMapper<Orders> {
 
     /**
      * 获取订单状态统计
+     *
      * @return 包含订单状态和对应数量的列表
      */
     @Select("SELECT CAST(status AS SIGNED) as status, COUNT(id) as count FROM orders WHERE deleted = 0 GROUP BY status")
     List<Map<String, Object>> getOrderStatusStatistics();
-    
+
     /**
      * 获取订单统计数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和订单数量的列表
      */
@@ -42,11 +44,12 @@ public interface OrdersMapper extends BaseMapper<Orders> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("dateFormat") String dateFormat);
-    
+
     /**
      * 获取交易额统计数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和交易金额的列表
      */
@@ -58,11 +61,12 @@ public interface OrdersMapper extends BaseMapper<Orders> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("dateFormat") String dateFormat);
-    
+
     /**
      * 计算平台收入
+     *
      * @param startDate 开始日期
-     * @param endDate 结束日期
+     * @param endDate   结束日期
      * @return 平台收入金额
      */
     @Select("SELECT SUM(price) * 0.03 as platform_income FROM orders " +
@@ -71,11 +75,12 @@ public interface OrdersMapper extends BaseMapper<Orders> {
     BigDecimal getPlatformIncome(
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate);
-    
+
     /**
      * 统计今日新增订单数
+     *
      * @param startTime 今日开始时间
-     * @param endTime 今日结束时间
+     * @param endTime   今日结束时间
      * @return 新增订单数
      */
     @Select("SELECT COUNT(*) FROM orders WHERE deleted = 0 " +
@@ -83,18 +88,20 @@ public interface OrdersMapper extends BaseMapper<Orders> {
     int countTodayNewOrders(
             @Param("startTime") Date startTime,
             @Param("endTime") Date endTime);
-    
+
     /**
      * 计算已完成订单的交易总额
+     *
      * @return 交易总额
      */
     @Select("SELECT SUM(price) FROM orders WHERE deleted = 0 AND status = 4")
     BigDecimal calculateTotalTransactionAmount();
-    
+
     /**
      * 计算今日交易额
+     *
      * @param startTime 今日开始时间
-     * @param endTime 今日结束时间
+     * @param endTime   今日结束时间
      * @return 今日交易额
      */
     @Select("SELECT SUM(price) FROM orders WHERE deleted = 0 AND status = 4 " +
@@ -102,11 +109,12 @@ public interface OrdersMapper extends BaseMapper<Orders> {
     BigDecimal calculateTodayTransactionAmount(
             @Param("startTime") Date startTime,
             @Param("endTime") Date endTime);
-    
+
     /**
      * 获取用户活跃度统计数据(买家部分)
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和活跃用户数的列表
      */
@@ -121,11 +129,12 @@ public interface OrdersMapper extends BaseMapper<Orders> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("dateFormat") String dateFormat);
-    
+
     /**
      * 获取用户活跃度统计数据(卖家部分)
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和活跃用户数的列表
      */

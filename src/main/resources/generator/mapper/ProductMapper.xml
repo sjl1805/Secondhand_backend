@@ -28,34 +28,36 @@
 
     <!-- 获取商品状态统计 -->
     <select id="getProductStatusStatistics" resultType="java.util.Map">
-        SELECT 
-            status, COUNT(id) as count 
-        FROM product 
-        WHERE deleted = 0 
-            AND status IN (1, 2, 3) <!-- 只统计有效的状态: 1-在售, 2-已售, 3-下架 -->
+        SELECT
+        status, COUNT(id) as count
+        FROM product
+        WHERE deleted = 0
+        AND status IN (1, 2, 3) <!-- 只统计有效的状态: 1-在售, 2-已售, 3-下架 -->
         GROUP BY status
         ORDER BY status ASC
     </select>
-    
+
     <!-- 统计今日新增商品数 -->
     <select id="countTodayNewProducts" resultType="java.lang.Integer">
-        SELECT 
-            COUNT(*) 
-        FROM product 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startTime} AND #{endTime}
+        SELECT COUNT(*)
+        FROM product
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startTime} AND #{endTime}
     </select>
-    
+
     <!-- 获取热门商品统计数据 -->
     <select id="getHotProductsStatistics" resultType="java.util.Map">
-        SELECT 
-            p.id, p.title, p.view_count, 
-            (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) as favorite_count, 
-            p.price, p.status, u.nickname as seller_name 
-        FROM product p 
-        LEFT JOIN user u ON p.user_id = u.id 
-        WHERE p.deleted = 0 
-        ORDER BY (p.view_count + (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) * 2) DESC 
+        SELECT p.id,
+               p.title,
+               p.view_count,
+               (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) as favorite_count,
+               p.price,
+               p.status,
+               u.nickname                                                  as seller_name
+        FROM product p
+                 LEFT JOIN user u ON p.user_id = u.id
+        WHERE p.deleted = 0
+        ORDER BY (p.view_count + (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) * 2) DESC
         LIMIT #{limit}
     </select>
 </mapper>

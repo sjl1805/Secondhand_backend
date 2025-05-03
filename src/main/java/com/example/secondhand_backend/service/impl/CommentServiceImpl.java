@@ -36,27 +36,22 @@ import java.util.stream.Collectors;
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         implements CommentService {
 
-    @Autowired
-    private OrdersMapper ordersMapper;
-
-    @Autowired
-    private ProductMapper productMapper;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Autowired
-    private ProductImageService productImageService;
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    
     private static final String COMMENT_CACHE_PREFIX = "comment:";
     private static final String PRODUCT_COMMENTS_CACHE_PREFIX = "comment:product:";
     private static final String USER_COMMENTS_CACHE_PREFIX = "comment:user:";
     private static final String PRODUCT_RATING_CACHE_PREFIX = "comment:rating:";
     private static final String ORDER_COMMENTED_CACHE_PREFIX = "comment:order:";
     private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
+    @Autowired
+    private OrdersMapper ordersMapper;
+    @Autowired
+    private ProductMapper productMapper;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private ProductImageService productImageService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional
@@ -98,11 +93,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
         // 7. 保存评价
         save(comment);
-        
+
         // 8. 更新订单评价状态
         order.setIsCommented(1); // 设置订单已评价
         ordersMapper.updateById(order);
-        
+
         // 9. 清除相关缓存
         clearCommentCache(comment.getProductId(), userId, order.getId());
 
@@ -114,11 +109,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 从缓存获取
         String cacheKey = COMMENT_CACHE_PREFIX + commentId;
         CommentVO commentVO = (CommentVO) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (commentVO != null) {
             return commentVO;
         }
-        
+
         // 缓存未命中，查询数据库
         // 获取评价
         Comment comment = getById(commentId);
@@ -128,10 +123,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
         // 转换为VO
         commentVO = convertToCommentVO(comment);
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, commentVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return commentVO;
     }
 
@@ -140,11 +135,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 从缓存获取
         String cacheKey = PRODUCT_COMMENTS_CACHE_PREFIX + productId + ":" + page + ":" + size;
         IPage<CommentVO> commentVOPage = (IPage<CommentVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (commentVOPage != null) {
             return commentVOPage;
         }
-        
+
         // 缓存未命中，查询数据库
         // 验证商品是否存在
         Product product = productMapper.selectById(productId);
@@ -174,7 +169,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         commentVOPage.setTotal(result.getTotal());
         commentVOPage.setPages(result.getPages());
         commentVOPage.setRecords(commentVOList);
-        
+
         // 将结果存入缓存，设置较短的过期时间
         redisTemplate.opsForValue().set(cacheKey, commentVOPage, 1, TimeUnit.HOURS);
 
@@ -186,11 +181,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 从缓存获取
         String cacheKey = USER_COMMENTS_CACHE_PREFIX + userId + ":" + page + ":" + size;
         IPage<CommentVO> commentVOPage = (IPage<CommentVO>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (commentVOPage != null) {
             return commentVOPage;
         }
-        
+
         // 缓存未命中，查询数据库
         // 构建查询条件
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
@@ -214,7 +209,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         commentVOPage.setTotal(result.getTotal());
         commentVOPage.setPages(result.getPages());
         commentVOPage.setRecords(commentVOList);
-        
+
         // 将结果存入缓存，设置较短的过期时间
         redisTemplate.opsForValue().set(cacheKey, commentVOPage, 1, TimeUnit.HOURS);
 
@@ -238,7 +233,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 逻辑删除评价
         comment.setDeleted(1);
         updateById(comment);
-        
+
         // 清除相关缓存
         clearCommentCache(comment.getProductId(), userId, comment.getOrderId());
         String commentCacheKey = COMMENT_CACHE_PREFIX + commentId;
@@ -250,11 +245,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 从缓存获取
         String cacheKey = PRODUCT_RATING_CACHE_PREFIX + productId;
         Double rating = (Double) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (rating != null) {
             return rating;
         }
-        
+
         // 缓存未命中，查询数据库
         // 验证商品是否存在
         Product product = productMapper.selectById(productId);
@@ -280,7 +275,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
             }
             rating = totalRating / comments.size();
         }
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, rating, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
@@ -292,11 +287,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 从缓存获取
         String cacheKey = ORDER_COMMENTED_CACHE_PREFIX + orderId;
         Boolean isCommented = (Boolean) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (isCommented != null) {
             return isCommented;
         }
-        
+
         // 缓存未命中，查询数据库
         // 首先检查订单表中的is_commented字段
         Orders order = ordersMapper.selectById(orderId);
@@ -305,7 +300,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
             redisTemplate.opsForValue().set(cacheKey, true, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
             return true;
         }
-        
+
         // 如果订单表中状态不是已评价，再查评价表进行二次确认
         // 构建查询条件
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
@@ -314,10 +309,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
         // 查询数量
         isCommented = count(queryWrapper) > 0;
-        
+
         // 将结果存入缓存
         redisTemplate.opsForValue().set(cacheKey, isCommented, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
-        
+
         return isCommented;
     }
 
@@ -352,27 +347,27 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
         return commentVO;
     }
-    
+
     /**
      * 清除评论相关缓存
      *
      * @param productId 商品ID
-     * @param userId 用户ID
-     * @param orderId 订单ID
+     * @param userId    用户ID
+     * @param orderId   订单ID
      */
     private void clearCommentCache(Long productId, Long userId, Long orderId) {
         // 清除商品评分缓存
         String ratingCacheKey = PRODUCT_RATING_CACHE_PREFIX + productId;
         redisTemplate.delete(ratingCacheKey);
-        
+
         // 清除商品评论列表缓存（模糊删除）
         String productCommentsPattern = PRODUCT_COMMENTS_CACHE_PREFIX + productId + "*";
         redisTemplate.delete(redisTemplate.keys(productCommentsPattern));
-        
+
         // 清除用户评论列表缓存（模糊删除）
         String userCommentsPattern = USER_COMMENTS_CACHE_PREFIX + userId + "*";
         redisTemplate.delete(redisTemplate.keys(userCommentsPattern));
-        
+
         // 清除订单评论状态缓存
         String orderCommentedCacheKey = ORDER_COMMENTED_CACHE_PREFIX + orderId;
         redisTemplate.delete(orderCommentedCacheKey);

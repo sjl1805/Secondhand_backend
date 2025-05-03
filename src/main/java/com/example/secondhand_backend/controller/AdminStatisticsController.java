@@ -8,7 +8,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.List;
@@ -24,7 +27,7 @@ public class AdminStatisticsController {
 
     @Autowired
     private StatisticsService statisticsService;
-    
+
     @GetMapping("/dashboard/overview")
     @Operation(summary = "获取仪表盘概览数据", description = "获取总用户数、总商品数、总订单数、完成交易额等数据")
     public Result<Map<String, Object>> getDashboardOverview() {
@@ -33,11 +36,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         Map<String, Object> overview = statisticsService.getDashboardOverview();
         return Result.success(overview);
     }
-    
+
     @GetMapping("/today")
     @Operation(summary = "获取今日数据统计", description = "获取今日新增用户数、今日新增商品数、今日新增订单数、今日交易额")
     public Result<Map<String, Object>> getTodayStatistics() {
@@ -46,11 +49,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         Map<String, Object> todayStats = statisticsService.getTodayStatistics();
         return Result.success(todayStats);
     }
-    
+
     @GetMapping("/user/register")
     @Operation(summary = "获取用户注册统计数据", description = "按时间粒度统计用户注册数量")
     public Result<List<Map<String, Object>>> getUserRegisterStatistics(
@@ -65,11 +68,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getUserRegisterStatistics(startDate, endDate, timeGranularity);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/order/count")
     @Operation(summary = "获取订单统计数据", description = "按时间粒度统计订单数量")
     public Result<List<Map<String, Object>>> getOrderStatistics(
@@ -84,11 +87,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getOrderStatistics(startDate, endDate, timeGranularity);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/transaction")
     @Operation(summary = "获取交易额统计数据", description = "按时间粒度统计交易金额")
     public Result<List<Map<String, Object>>> getTransactionStatistics(
@@ -103,11 +106,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getTransactionStatistics(startDate, endDate, timeGranularity);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/product/status")
     @Operation(summary = "获取商品状态统计", description = "统计各状态商品数量")
     public Result<List<Map<String, Object>>> getProductStatusStatistics() {
@@ -116,11 +119,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getProductStatusStatistics();
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/order/status")
     @Operation(summary = "获取订单状态统计", description = "统计各状态订单数量")
     public Result<List<Map<String, Object>>> getOrderStatusStatistics() {
@@ -129,11 +132,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getOrderStatusStatistics();
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/seller/active")
     @Operation(summary = "获取活跃卖家统计数据", description = "获取平台活跃卖家数据")
     public Result<List<Map<String, Object>>> getActiveSellersStatistics(
@@ -144,11 +147,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getActiveSellersStatistics(limit);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/buyer/active")
     @Operation(summary = "获取活跃买家统计数据", description = "获取平台活跃买家数据")
     public Result<List<Map<String, Object>>> getActiveBuyersStatistics(
@@ -159,11 +162,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getActiveBuyersStatistics(limit);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/product/hot")
     @Operation(summary = "获取热门商品统计数据", description = "获取平台热门商品数据")
     public Result<List<Map<String, Object>>> getHotProductsStatistics(
@@ -174,11 +177,11 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getHotProductsStatistics(limit);
         return Result.success(statistics);
     }
-    
+
     @GetMapping("/user/activity")
     @Operation(summary = "获取用户活跃度统计数据", description = "按时间粒度统计活跃用户数量")
     public Result<List<Map<String, Object>>> getUserActivityStatistics(
@@ -193,7 +196,7 @@ public class AdminStatisticsController {
         if (userRole == null || userRole != 9) {
             return Result.error(403, "无权限访问");
         }
-        
+
         List<Map<String, Object>> statistics = statisticsService.getUserActivityStatistics(startDate, endDate, timeGranularity);
         return Result.success(statistics);
     }

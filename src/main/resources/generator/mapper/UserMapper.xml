@@ -25,53 +25,63 @@
         email,credit_score,role,
         create_time,update_time,deleted
     </sql>
-    
+
     <!-- 获取用户注册统计数据 -->
     <select id="getUserRegisterStatistics" resultType="java.util.Map">
-        SELECT 
-            DATE_FORMAT(create_time, #{dateFormat}) as time_period, 
-            COUNT(id) as count 
-        FROM user 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startDate} AND #{endDate} 
-        GROUP BY time_period 
+        SELECT DATE_FORMAT(create_time, #{dateFormat}) as time_period,
+               COUNT(id)                               as count
+        FROM user
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY time_period
         ORDER BY time_period
     </select>
-    
+
     <!-- 统计今日新增用户数 -->
     <select id="countTodayNewUsers" resultType="java.lang.Integer">
-        SELECT 
-            COUNT(*) 
-        FROM user 
-        WHERE deleted = 0 
-        AND create_time BETWEEN #{startTime} AND #{endTime}
+        SELECT COUNT(*)
+        FROM user
+        WHERE deleted = 0
+          AND create_time BETWEEN #{startTime} AND #{endTime}
     </select>
-    
+
     <!-- 获取活跃卖家统计数据 -->
     <select id="getActiveSellersStatistics" resultType="java.util.Map">
-        SELECT 
-            u.id, u.nickname, u.avatar, 
-            (SELECT COUNT(*) FROM product p WHERE p.user_id = u.id AND p.deleted = 0) as product_count, 
-            (SELECT COUNT(*) FROM orders o WHERE o.seller_id = u.id AND o.status = 4 AND o.deleted = 0) as completed_order_count, 
-            (SELECT SUM(o.price) FROM orders o WHERE o.seller_id = u.id AND o.status = 4 AND o.deleted = 0) as total_sales 
-        FROM user u 
-        WHERE u.deleted = 0 
-        HAVING product_count > 0 OR completed_order_count > 0 
-        ORDER BY (product_count + completed_order_count * 2) DESC 
+        SELECT u.id,
+               u.nickname,
+               u.avatar,
+               (SELECT COUNT(*) FROM product p WHERE p.user_id = u.id AND p.deleted = 0)                       as product_count,
+               (SELECT COUNT(*)
+                FROM orders o
+                WHERE o.seller_id = u.id
+                  AND o.status = 4
+                  AND o.deleted = 0)                                                                           as completed_order_count,
+               (SELECT SUM(o.price)
+                FROM orders o
+                WHERE o.seller_id = u.id
+                  AND o.status = 4
+                  AND o.deleted = 0)                                                                           as total_sales
+        FROM user u
+        WHERE u.deleted = 0
+        HAVING product_count > 0
+            OR completed_order_count > 0
+        ORDER BY (product_count + completed_order_count * 2) DESC
         LIMIT #{limit}
     </select>
-    
+
     <!-- 获取活跃买家统计数据 -->
     <select id="getActiveBuyersStatistics" resultType="java.util.Map">
-        SELECT 
-            u.id, u.nickname, u.avatar, 
-            COUNT(o.id) as order_count, 
-            SUM(o.price) as total_spent 
-        FROM user u 
-        JOIN orders o ON u.id = o.buyer_id 
-        WHERE u.deleted = 0 AND o.deleted = 0 
-        GROUP BY u.id, u.nickname, u.avatar 
-        ORDER BY order_count DESC, total_spent DESC 
+        SELECT u.id,
+               u.nickname,
+               u.avatar,
+               COUNT(o.id)  as order_count,
+               SUM(o.price) as total_spent
+        FROM user u
+                 JOIN orders o ON u.id = o.buyer_id
+        WHERE u.deleted = 0
+          AND o.deleted = 0
+        GROUP BY u.id, u.nickname, u.avatar
+        ORDER BY order_count DESC, total_spent DESC
         LIMIT #{limit}
     </select>
 </mapper>

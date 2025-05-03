@@ -47,7 +47,7 @@ public class AdminUserController {
         if (user == null) {
             return Result.error("用户不存在");
         }
-        
+
         return Result.success(user);
     }
 

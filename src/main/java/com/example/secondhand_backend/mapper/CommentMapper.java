@@ -21,8 +21,9 @@ public interface CommentMapper extends BaseMapper<Comment> {
 
     /**
      * 获取用户活跃度统计数据(评论部分)
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和活跃用户数的列表
      */
@@ -37,9 +38,10 @@ public interface CommentMapper extends BaseMapper<Comment> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("dateFormat") String dateFormat);
-    
+
     /**
      * 获取商品评分统计数据
+     *
      * @param productId 商品ID
      * @return 包含评分和数量的列表
      */

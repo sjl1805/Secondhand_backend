@@ -21,8 +21,9 @@ public interface UserMapper extends BaseMapper<User> {
 
     /**
      * 获取用户注册统计数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      * @param dateFormat 日期格式
      * @return 包含时间点和用户数量的列表
      */
@@ -33,18 +34,20 @@ public interface UserMapper extends BaseMapper<User> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("dateFormat") String dateFormat);
-    
+
     /**
      * 统计今日新增用户数
+     *
      * @param startTime 今日开始时间
-     * @param endTime 今日结束时间
+     * @param endTime   今日结束时间
      * @return 新增用户数
      */
     @Select("SELECT COUNT(*) FROM user WHERE deleted = 0 AND create_time BETWEEN #{startTime} AND #{endTime}")
     int countTodayNewUsers(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
-    
+
     /**
      * 获取活跃卖家统计数据
+     *
      * @param limit 返回数量限制
      * @return 活跃卖家列表
      */
@@ -58,9 +61,10 @@ public interface UserMapper extends BaseMapper<User> {
             "ORDER BY (product_count + completed_order_count * 2) DESC " +
             "LIMIT #{limit}")
     List<Map<String, Object>> getActiveSellersStatistics(@Param("limit") int limit);
-    
+
     /**
      * 获取活跃买家统计数据
+     *
      * @param limit 返回数量限制
      * @return 活跃买家列表
      */

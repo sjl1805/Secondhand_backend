@@ -24,11 +24,10 @@ import java.util.stream.Collectors;
 public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, ProductImage>
         implements ProductImageService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    
     private static final String PRODUCT_IMAGES_CACHE_PREFIX = "product:images:";
     private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional
@@ -51,7 +50,7 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         }
 
         saveBatch(imageList);
-        
+
         // 更新缓存
         String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
         redisTemplate.opsForValue().set(cacheKey, imageUrls, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
@@ -62,11 +61,11 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         // 从缓存获取
         String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
         List<String> imageUrls = (List<String>) redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (imageUrls != null) {
             return imageUrls;
         }
-        
+
         // 缓存未命中，查询数据库
         LambdaQueryWrapper<ProductImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductImage::getProductId, productId)
@@ -76,12 +75,12 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         imageUrls = imageList.stream()
                 .map(ProductImage::getImageUrl)
                 .collect(Collectors.toList());
-        
+
         // 将结果存入缓存
         if (!imageUrls.isEmpty()) {
             redisTemplate.opsForValue().set(cacheKey, imageUrls, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
         }
-        
+
         return imageUrls;
     }
 
@@ -90,7 +89,7 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         LambdaQueryWrapper<ProductImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductImage::getProductId, productId);
         remove(queryWrapper);
-        
+
         // 删除缓存
         String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
         redisTemplate.delete(cacheKey);
