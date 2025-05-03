@@ -199,6 +199,47 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product>
     }
 
     @Override
+    @Transactional
+    public void updateProduct(Long productId, ProductDTO productDTO, Long userId) {
+        // 获取商品
+        Product product = getById(productId);
+        if (product == null || product.getDeleted() == 1) {
+            throw new BusinessException("商品不存在或已删除");
+        }
+
+        // 验证权限
+        if (!product.getUserId().equals(userId)) {
+            throw new BusinessException("无权操作该商品");
+        }
+
+        // 只有在售状态或已下架状态的商品可以编辑
+        if (product.getStatus() != 1 && product.getStatus() != 3) {
+            throw new BusinessException("该商品当前状态不允许编辑");
+        }
+
+        // 更新商品信息
+        BeanUtils.copyProperties(productDTO, product);
+        
+        // 保留原有的用户ID、状态、浏览次数和删除标记
+        product.setId(productId);
+        product.setUserId(userId);
+        product.setStatus(product.getStatus());
+        product.setViewCount(product.getViewCount());
+        product.setDeleted(0);
+        
+        // 更新商品
+        updateById(product);
+        
+        // 更新商品图片
+        if (productDTO.getImageUrls() != null && !productDTO.getImageUrls().isEmpty()) {
+            // 先删除旧图片关联
+            productImageService.deleteProductImages(productId);
+            // 保存新图片关联
+            productImageService.saveProductImages(productId, productDTO.getImageUrls());
+        }
+    }
+
+    @Override
     public IPage<ProductVO> adminGetProductList(int page, int size, Integer categoryId,
                                                 Integer status, String keyword, Long userId) {
         // 创建查询条件

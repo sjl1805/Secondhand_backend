@@ -43,6 +43,10 @@ public class Product implements Serializable {
      */
     private Integer categoryId;
     /**
+     * 商品成色
+     */
+    private Integer conditions;
+    /**
      * 状态：1-在售 2-已售 3-下架
      */
     private Integer status;

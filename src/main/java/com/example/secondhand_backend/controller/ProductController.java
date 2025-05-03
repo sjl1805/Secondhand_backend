@@ -30,6 +30,16 @@ public class ProductController {
         return Result.success(productId);
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "更新商品", description = "更新已发布的商品信息")
+    public Result<Void> updateProduct(
+            @Parameter(description = "商品ID") @PathVariable("id") Long productId,
+            @RequestBody ProductDTO productDTO) {
+        Long userId = UserUtils.getCurrentUserId();
+        productService.updateProduct(productId, productDTO, userId);
+        return Result.success();
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "获取商品详情", description = "获取指定ID的商品详情")
     public Result<ProductVO> getProductDetail(
@@ -52,6 +62,17 @@ public class ProductController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "分类ID") @RequestParam(required = false) Integer categoryId,
+            @Parameter(description = "搜索关键词") @RequestParam(required = false) String keyword) {
+        IPage<ProductVO> productList = productService.getProductList(page, size, categoryId, keyword);
+        return Result.success(productList);
+    }
+
+    @GetMapping("/category/{categoryId}")
+    @Operation(summary = "获取分类商品", description = "分页获取指定分类下的商品列表")
+    public Result<IPage<ProductVO>> getCategoryProducts(
+            @Parameter(description = "分类ID") @PathVariable("categoryId") Integer categoryId,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "搜索关键词") @RequestParam(required = false) String keyword) {
         IPage<ProductVO> productList = productService.getProductList(page, size, categoryId, keyword);
         return Result.success(productList);

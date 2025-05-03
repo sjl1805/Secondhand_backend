@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS `product`
     `price`       DECIMAL(10, 2) NOT NULL COMMENT '价格',
     `category_id` INT            NOT NULL COMMENT '分类ID',
     `status`      TINYINT(1) DEFAULT 1 COMMENT '状态：1-在售 2-已售 3-下架',
+    `conditions`   TINYINT(1) DEFAULT 1 COMMENT '商品成色：1-全新 2-几乎全新 3-轻微使用痕迹 4-正常使用痕迹 5-明显使用痕迹',
     `view_count`  INT        DEFAULT 0 COMMENT '浏览次数',
     `create_time` DATETIME   DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

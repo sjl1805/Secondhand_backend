@@ -88,6 +88,15 @@ public interface ProductService extends IService<Product> {
     void deleteProduct(Long productId, Long userId);
 
     /**
+     * 更新商品信息
+     *
+     * @param productId  商品ID
+     * @param productDTO 商品信息
+     * @param userId     用户ID
+     */
+    void updateProduct(Long productId, ProductDTO productDTO, Long userId);
+
+    /**
      * 管理员获取商品列表（包括所有状态）
      *
      * @param page       页码
