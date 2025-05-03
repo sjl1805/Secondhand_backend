@@ -32,7 +32,9 @@
             status, COUNT(id) as count 
         FROM product 
         WHERE deleted = 0 
+            AND status IN (1, 2, 3) <!-- 只统计有效的状态: 1-在售, 2-已售, 3-下架 -->
         GROUP BY status
+        ORDER BY status ASC
     </select>
     
     <!-- 统计今日新增商品数 -->

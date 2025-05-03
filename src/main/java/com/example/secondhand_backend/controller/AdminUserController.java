@@ -34,6 +34,23 @@ public class AdminUserController {
         return role != null && role == 9;
     }
 
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "获取用户详情", description = "根据用户ID获取用户详细信息")
+    public Result<User> getUserById(
+            @Parameter(description = "用户ID") @PathVariable Long userId) {
+        // 验证当前用户是否为管理员
+        if (!validateAdminRole()) {
+            return Result.error("无权访问此接口，需要管理员权限");
+        }
+
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        
+        return Result.success(user);
+    }
+
     @GetMapping("/users")
     @Operation(summary = "获取用户列表", description = "分页获取用户列表，支持搜索")
     public Result<IPage<User>> getUserList(

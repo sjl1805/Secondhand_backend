@@ -49,6 +49,21 @@ public interface ProductMapper extends BaseMapper<Product> {
             "ORDER BY (p.view_count + (SELECT COUNT(*) FROM favorite f WHERE f.product_id = p.id) * 2) DESC " +
             "LIMIT #{limit}")
     List<Map<String, Object>> getHotProductsStatistics(@Param("limit") int limit);
+
+    /**
+     * 获取商品评分统计
+     * @param productId 商品ID
+     * @return 商品评分统计数据
+     */
+    @Select("SELECT " +
+            "SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star, " +
+            "SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_stars, " +
+            "SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_stars, " +
+            "SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_stars, " +
+            "SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_stars " +
+            "FROM product " +
+            "WHERE id = #{productId} AND deleted = 0")
+    Map<String, Integer> getProductRatingStatistics(@Param("productId") Long productId);
 }
 
 

@@ -38,8 +38,10 @@
         SELECT 
             status, COUNT(id) as count 
         FROM orders 
-        WHERE deleted = 0 
+        WHERE deleted = 0
+            AND status IN (1, 2, 3, 4, 5) <!-- 只统计有效的状态: 1-待付款, 2-待发货, 3-待收货, 4-已完成, 5-已取消 -->
         GROUP BY status
+        ORDER BY status ASC
     </select>
     
     <!-- 获取订单统计数据 -->
