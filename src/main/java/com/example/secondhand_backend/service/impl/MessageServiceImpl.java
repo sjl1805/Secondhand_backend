@@ -15,10 +15,12 @@ import com.example.secondhand_backend.model.vo.MessageVO;
 import com.example.secondhand_backend.service.MessageService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +34,15 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
 
     @Autowired
     private UserMapper userMapper;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String MESSAGE_CACHE_PREFIX = "message:";
+    private static final String CHAT_HISTORY_CACHE_PREFIX = "message:chat:";
+    private static final String MESSAGE_LIST_CACHE_PREFIX = "message:list:";
+    private static final String UNREAD_COUNT_CACHE_PREFIX = "message:unread:";
+    private static final long CACHE_EXPIRE_TIME = 1; // 缓存过期时间（小时）
 
     @Override
     @Transactional
@@ -56,12 +67,24 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
 
         // 保存消息
         save(message);
+        
+        // 清除相关缓存
+        clearMessageCache(senderId, messageDTO.getReceiverId());
 
         return message.getId();
     }
 
     @Override
     public MessageVO getMessageDetail(Long messageId, Long userId) {
+        // 从缓存获取
+        String cacheKey = MESSAGE_CACHE_PREFIX + messageId + ":" + userId;
+        MessageVO messageVO = (MessageVO) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (messageVO != null) {
+            return messageVO;
+        }
+        
+        // 缓存未命中，查询数据库
         // 获取消息
         Message message = getById(messageId);
         if (message == null) {
@@ -77,14 +100,31 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         if (message.getReceiverId().equals(userId) && message.getIsRead() == 0) {
             message.setIsRead(1);
             updateById(message);
+            
+            // 清除未读计数缓存
+            clearUnreadCountCache(userId);
         }
 
         // 转换为VO
-        return convertToMessageVO(message, userId);
+        messageVO = convertToMessageVO(message, userId);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, messageVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return messageVO;
     }
 
     @Override
     public IPage<MessageVO> getChatHistory(Long userId, Long targetUserId, int page, int size) {
+        // 从缓存获取
+        String cacheKey = CHAT_HISTORY_CACHE_PREFIX + userId + ":" + targetUserId + ":" + page + ":" + size;
+        IPage<MessageVO> messageVOPage = (IPage<MessageVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (messageVOPage != null) {
+            return messageVOPage;
+        }
+        
+        // 缓存未命中，查询数据库
         // 验证目标用户是否存在
         User targetUser = userMapper.selectById(targetUserId);
         if (targetUser == null) {
@@ -118,18 +158,30 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         Collections.reverse(messageVOList);
 
         // 创建新的分页对象
-        Page<MessageVO> messageVOPage = new Page<>();
+        messageVOPage = new Page<>();
         messageVOPage.setCurrent(result.getCurrent());
         messageVOPage.setSize(result.getSize());
         messageVOPage.setTotal(result.getTotal());
         messageVOPage.setPages(result.getPages());
         messageVOPage.setRecords(messageVOList);
-
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, messageVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
         return messageVOPage;
     }
 
     @Override
     public List<MessageVO> getMessageList(Long userId) {
+        // 从缓存获取
+        String cacheKey = MESSAGE_LIST_CACHE_PREFIX + userId;
+        List<MessageVO> messageVOList = (List<MessageVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (messageVOList != null) {
+            return messageVOList;
+        }
+        
+        // 缓存未命中，查询数据库
         // 获取所有与当前用户相关的最新消息
         Map<Long, MessageVO> latestMessageMap = new HashMap<>();
 
@@ -171,9 +223,14 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         }
 
         // 转换为列表并按时间倒序排序
-        return latestMessageMap.values().stream()
+        messageVOList = latestMessageMap.values().stream()
                 .sorted(Comparator.comparing(MessageVO::getCreateTime).reversed())
                 .collect(Collectors.toList());
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, messageVOList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return messageVOList;
     }
 
     @Override
@@ -193,6 +250,13 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         // 标记为已读
         message.setIsRead(1);
         updateById(message);
+        
+        // 清除相关缓存
+        clearMessageCache(message.getSenderId(), userId);
+        
+        // 清除消息详情缓存
+        String messageCacheKey = MESSAGE_CACHE_PREFIX + messageId + ":" + userId;
+        redisTemplate.delete(messageCacheKey);
     }
 
     @Override
@@ -206,18 +270,39 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
                 .set(Message::getIsRead, 1);
 
         // 执行更新
-        return baseMapper.update(null, updateWrapper);
+        int updatedCount = baseMapper.update(null, updateWrapper);
+        
+        // 如果有消息被更新，清除相关缓存
+        if (updatedCount > 0) {
+            clearMessageCache(targetUserId, userId);
+        }
+        
+        return updatedCount;
     }
 
     @Override
     public int getUnreadCount(Long userId) {
+        // 从缓存获取
+        String cacheKey = UNREAD_COUNT_CACHE_PREFIX + userId;
+        Integer unreadCount = (Integer) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (unreadCount != null) {
+            return unreadCount;
+        }
+        
+        // 缓存未命中，查询数据库
         // 构建查询条件
         LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Message::getReceiverId, userId)
                 .eq(Message::getIsRead, 0);
 
         // 统计数量
-        return Math.toIntExact(count(queryWrapper));
+        unreadCount = Math.toIntExact(count(queryWrapper));
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, unreadCount, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return unreadCount;
     }
 
     @Override
@@ -236,6 +321,15 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
 
         // 删除消息
         removeById(messageId);
+        
+        // 清除相关缓存
+        clearMessageCache(message.getSenderId(), message.getReceiverId());
+        
+        // 清除消息详情缓存
+        String senderCacheKey = MESSAGE_CACHE_PREFIX + messageId + ":" + message.getSenderId();
+        String receiverCacheKey = MESSAGE_CACHE_PREFIX + messageId + ":" + message.getReceiverId();
+        redisTemplate.delete(senderCacheKey);
+        redisTemplate.delete(receiverCacheKey);
     }
 
     /**
@@ -270,6 +364,39 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         }
 
         return messageVO;
+    }
+    
+    /**
+     * 清除消息相关缓存
+     *
+     * @param senderId 发送者ID
+     * @param receiverId 接收者ID
+     */
+    private void clearMessageCache(Long senderId, Long receiverId) {
+        // 清除聊天历史缓存（模糊删除）
+        String chatHistoryCacheKey1 = CHAT_HISTORY_CACHE_PREFIX + senderId + ":" + receiverId + "*";
+        String chatHistoryCacheKey2 = CHAT_HISTORY_CACHE_PREFIX + receiverId + ":" + senderId + "*";
+        redisTemplate.delete(redisTemplate.keys(chatHistoryCacheKey1));
+        redisTemplate.delete(redisTemplate.keys(chatHistoryCacheKey2));
+        
+        // 清除消息列表缓存
+        String senderListCacheKey = MESSAGE_LIST_CACHE_PREFIX + senderId;
+        String receiverListCacheKey = MESSAGE_LIST_CACHE_PREFIX + receiverId;
+        redisTemplate.delete(senderListCacheKey);
+        redisTemplate.delete(receiverListCacheKey);
+        
+        // 清除未读计数缓存
+        clearUnreadCountCache(receiverId);
+    }
+    
+    /**
+     * 清除未读消息计数缓存
+     *
+     * @param userId 用户ID
+     */
+    private void clearUnreadCountCache(Long userId) {
+        String unreadCountCacheKey = UNREAD_COUNT_CACHE_PREFIX + userId;
+        redisTemplate.delete(unreadCountCacheKey);
     }
 }
 

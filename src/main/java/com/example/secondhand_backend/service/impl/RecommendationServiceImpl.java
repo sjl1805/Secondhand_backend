@@ -7,10 +7,12 @@ import com.example.secondhand_backend.model.entity.*;
 import com.example.secondhand_backend.model.vo.ProductVO;
 import com.example.secondhand_backend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -34,12 +36,34 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
     private ProductService productService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    // 缓存相关常量
+    private static final String USER_RECOMMENDATIONS_CACHE_PREFIX = "recommendation:user:";
+    private static final String SIMILAR_PRODUCTS_CACHE_PREFIX = "recommendation:similar:";
+    private static final String USER_SIMILARITY_MATRIX_CACHE_KEY = "recommendation:user_similarity_matrix";
+    private static final String PRODUCT_SIMILARITY_MATRIX_CACHE_KEY = "recommendation:product_similarity_matrix";
+    private static final String POPULAR_PRODUCTS_CACHE_PREFIX = "recommendation:popular:";
+    private static final String USER_INTERACTED_PRODUCTS_CACHE_PREFIX = "recommendation:user_interacted:";
+    private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
+    private static final long MATRIX_CACHE_EXPIRE_TIME = 72; // 相似度矩阵缓存过期时间（小时）
+    
     // 相似度计算缓存
     private Map<Long, Map<Long, Double>> userSimilarityCache = new HashMap<>();
     private Map<Long, Map<Long, Double>> productSimilarityCache = new HashMap<>();
 
     @Override
     public List<ProductVO> recommendProductsForUser(Long userId, int limit) {
+        // 先从Redis缓存中获取
+        String cacheKey = USER_RECOMMENDATIONS_CACHE_PREFIX + userId + ":" + limit;
+        List<ProductVO> recommendedProducts = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (recommendedProducts != null) {
+            return recommendedProducts;
+        }
+        
+        // 缓存未命中，计算推荐商品
         // 1. 计算用户相似度矩阵（如果缓存为空）
         if (userSimilarityCache.isEmpty()) {
             userSimilarityCache = calculateUserSimilarityMatrix();
@@ -49,7 +73,12 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         Map<Long, Double> userSimilarities = userSimilarityCache.getOrDefault(userId, new HashMap<>());
         if (userSimilarities.isEmpty()) {
             // 如果没有相似用户，返回热门商品
-            return getPopularProductsVO(limit);
+            recommendedProducts = getPopularProductsVO(limit);
+            
+            // 将结果存入Redis缓存
+            redisTemplate.opsForValue().set(cacheKey, recommendedProducts, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+            
+            return recommendedProducts;
         }
 
         // 按相似度排序，获取最相似的10个用户
@@ -112,22 +141,36 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
-            return getPopularProductsVO(limit);
+            recommendedProducts = getPopularProductsVO(limit);
+        } else {
+            LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
+            productQuery.in(Product::getId, recommendedProductIds)
+                    .eq(Product::getStatus, 1)  // 仅返回在售商品
+                    .orderByDesc(Product::getViewCount);
+
+            List<Product> products = productService.list(productQuery);
+            recommendedProducts = products.stream()
+                    .map(product -> productService.convertToProductVO(product, userId))
+                    .collect(Collectors.toList());
         }
-
-        LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
-        productQuery.in(Product::getId, recommendedProductIds)
-                .eq(Product::getStatus, 1)  // 仅返回在售商品
-                .orderByDesc(Product::getViewCount);
-
-        List<Product> products = productService.list(productQuery);
-        return products.stream()
-                .map(product -> productService.convertToProductVO(product, userId))
-                .collect(Collectors.toList());
+        
+        // 将结果存入Redis缓存
+        redisTemplate.opsForValue().set(cacheKey, recommendedProducts, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return recommendedProducts;
     }
 
     @Override
     public List<ProductVO> recommendSimilarProducts(Long userId, int limit) {
+        // 先从Redis缓存中获取
+        String cacheKey = SIMILAR_PRODUCTS_CACHE_PREFIX + userId + ":" + limit;
+        List<ProductVO> recommendedProducts = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (recommendedProducts != null) {
+            return recommendedProducts;
+        }
+        
+        // 缓存未命中，计算推荐商品
         // 1. 计算商品相似度矩阵（如果缓存为空）
         if (productSimilarityCache.isEmpty()) {
             productSimilarityCache = calculateProductSimilarityMatrix();
@@ -137,7 +180,12 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         Set<Long> interactedProductIds = getUserInteractedProductIds(userId);
         if (interactedProductIds.isEmpty()) {
             // 如果用户没有交互过任何商品，返回热门商品
-            return getPopularProductsVO(limit);
+            recommendedProducts = getPopularProductsVO(limit);
+            
+            // 将结果存入Redis缓存
+            redisTemplate.opsForValue().set(cacheKey, recommendedProducts, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+            
+            return recommendedProducts;
         }
 
         // 3. 找出与用户交互过的商品相似的其他商品
@@ -175,25 +223,39 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
         // 7. 返回商品详情
         if (recommendedProductIds.isEmpty()) {
-            return getPopularProductsVO(limit);
+            recommendedProducts = getPopularProductsVO(limit);
+        } else {
+            LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
+            productQuery.in(Product::getId, recommendedProductIds)
+                    .eq(Product::getStatus, 1)  // 仅返回在售商品
+                    .orderByDesc(Product::getViewCount);
+
+            List<Product> products = productService.list(productQuery);
+            recommendedProducts = products.stream()
+                    .map(product -> productService.convertToProductVO(product, userId))
+                    .collect(Collectors.toList());
         }
-
-        LambdaQueryWrapper<Product> productQuery = new LambdaQueryWrapper<>();
-        productQuery.in(Product::getId, recommendedProductIds)
-                .eq(Product::getStatus, 1)  // 仅返回在售商品
-                .orderByDesc(Product::getViewCount);
-
-        List<Product> products = productService.list(productQuery);
-        return products.stream()
-                .map(product -> productService.convertToProductVO(product, userId))
-                .collect(Collectors.toList());
+        
+        // 将结果存入Redis缓存
+        redisTemplate.opsForValue().set(cacheKey, recommendedProducts, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return recommendedProducts;
     }
 
     @Override
     public Map<Long, Map<Long, Double>> calculateUserSimilarityMatrix() {
+        // 先从Redis缓存中获取
+        Map<Long, Map<Long, Double>> userSimilarityMatrix = 
+                (Map<Long, Map<Long, Double>>) redisTemplate.opsForValue().get(USER_SIMILARITY_MATRIX_CACHE_KEY);
+        
+        if (userSimilarityMatrix != null) {
+            return userSimilarityMatrix;
+        }
+        
+        // 缓存未命中，计算相似度矩阵
         // 1. 获取所有用户
         List<User> allUsers = userService.list();
-        Map<Long, Map<Long, Double>> userSimilarityMatrix = new HashMap<>();
+        userSimilarityMatrix = new HashMap<>();
 
         // 2. 初始化用户-商品交互矩阵
         Map<Long, Map<Long, Double>> userProductMatrix = new HashMap<>();
@@ -224,15 +286,28 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
             userSimilarityMatrix.put(userA, similarityMap);
         }
+        
+        // 将结果存入Redis缓存
+        redisTemplate.opsForValue().set(USER_SIMILARITY_MATRIX_CACHE_KEY, userSimilarityMatrix, 
+                MATRIX_CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
         return userSimilarityMatrix;
     }
 
     @Override
     public Map<Long, Map<Long, Double>> calculateProductSimilarityMatrix() {
+        // 先从Redis缓存中获取
+        Map<Long, Map<Long, Double>> productSimilarityMatrix = 
+                (Map<Long, Map<Long, Double>>) redisTemplate.opsForValue().get(PRODUCT_SIMILARITY_MATRIX_CACHE_KEY);
+        
+        if (productSimilarityMatrix != null) {
+            return productSimilarityMatrix;
+        }
+        
+        // 缓存未命中，计算相似度矩阵
         // 1. 获取所有商品
         List<Product> allProducts = productService.list();
-        Map<Long, Map<Long, Double>> productSimilarityMatrix = new HashMap<>();
+        productSimilarityMatrix = new HashMap<>();
 
         // 2. 初始化商品-用户交互矩阵
         Map<Long, Map<Long, Double>> productUserMatrix = new HashMap<>();
@@ -263,6 +338,10 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
             productSimilarityMatrix.put(productA, similarityMap);
         }
+        
+        // 将结果存入Redis缓存
+        redisTemplate.opsForValue().set(PRODUCT_SIMILARITY_MATRIX_CACHE_KEY, productSimilarityMatrix, 
+                MATRIX_CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
         return productSimilarityMatrix;
     }
@@ -323,10 +402,24 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
     // 辅助方法：获取热门商品的VO对象
     private List<ProductVO> getPopularProductsVO(int limit) {
+        // 从缓存获取
+        String cacheKey = POPULAR_PRODUCTS_CACHE_PREFIX + limit;
+        List<ProductVO> productVOList = (List<ProductVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (productVOList != null) {
+            return productVOList;
+        }
+        
+        // 缓存未命中，查询数据库
         List<Product> popularProducts = getPopularProducts(limit);
-        return popularProducts.stream()
+        productVOList = popularProducts.stream()
                 .map(product -> productService.convertToProductVO(product, null))
                 .collect(Collectors.toList());
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, productVOList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return productVOList;
     }
 
     // 辅助方法：获取热门商品
@@ -341,7 +434,16 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
     // 辅助方法：获取用户已交互的商品ID集合
     private Set<Long> getUserInteractedProductIds(Long userId) {
-        Set<Long> productIds = new HashSet<>();
+        // 从缓存获取
+        String cacheKey = USER_INTERACTED_PRODUCTS_CACHE_PREFIX + userId;
+        Set<Long> cachedProductIds = (Set<Long>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (cachedProductIds != null) {
+            return cachedProductIds;
+        }
+        
+        // 缓存未命中，查询数据库
+        final Set<Long> productIds = new HashSet<>();
 
         // 获取用户收藏的商品
         LambdaQueryWrapper<Favorite> favoriteQuery = new LambdaQueryWrapper<>();
@@ -356,6 +458,9 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
         // 添加所有商品ID
         favorites.forEach(favorite -> productIds.add(favorite.getProductId()));
         orders.forEach(order -> productIds.add(order.getProductId()));
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, productIds, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
         return productIds;
     }
@@ -457,6 +562,45 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
 
         // 计算相似度
         return dotProduct / (normA * normB);
+    }
+
+    // 辅助方法：刷新用户交互商品的缓存
+    private void refreshUserInteractedProductsCache(Long userId) {
+        String cacheKey = USER_INTERACTED_PRODUCTS_CACHE_PREFIX + userId;
+        redisTemplate.delete(cacheKey);
+        // 重新加载缓存
+        getUserInteractedProductIds(userId);
+    }
+    
+    // 辅助方法：刷新热门商品缓存
+    private void refreshPopularProductsCache() {
+        // 删除所有热门商品缓存
+        Set<String> keys = redisTemplate.keys(POPULAR_PRODUCTS_CACHE_PREFIX + "*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+    
+    // 辅助方法：刷新所有推荐缓存
+    public void refreshAllRecommendationCaches() {
+        // 删除用户推荐缓存
+        Set<String> userRecommendationKeys = redisTemplate.keys(USER_RECOMMENDATIONS_CACHE_PREFIX + "*");
+        if (userRecommendationKeys != null && !userRecommendationKeys.isEmpty()) {
+            redisTemplate.delete(userRecommendationKeys);
+        }
+        
+        // 删除相似商品缓存
+        Set<String> similarProductsKeys = redisTemplate.keys(SIMILAR_PRODUCTS_CACHE_PREFIX + "*");
+        if (similarProductsKeys != null && !similarProductsKeys.isEmpty()) {
+            redisTemplate.delete(similarProductsKeys);
+        }
+        
+        // 删除相似矩阵缓存
+        redisTemplate.delete(USER_SIMILARITY_MATRIX_CACHE_KEY);
+        redisTemplate.delete(PRODUCT_SIMILARITY_MATRIX_CACHE_KEY);
+        
+        // 刷新热门商品缓存
+        refreshPopularProductsCache();
     }
 }
 

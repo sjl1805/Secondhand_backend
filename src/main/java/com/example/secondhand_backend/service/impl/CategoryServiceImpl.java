@@ -10,6 +10,7 @@ import com.example.secondhand_backend.model.vo.CategoryVO;
 import com.example.secondhand_backend.service.CategoryService;
 import com.example.secondhand_backend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -30,36 +32,93 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
 
     @Autowired
     private ProductService productService;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String CATEGORY_CACHE_PREFIX = "category:";
+    private static final String ALL_CATEGORIES_CACHE_KEY = "category:all";
+    private static final String CATEGORY_TREE_CACHE_KEY = "category:tree";
+    private static final String SUB_CATEGORIES_CACHE_PREFIX = "category:sub:";
+    private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
 
     @Override
     public List<Category> getAllCategories() {
+        // 先从缓存获取
+        List<Category> categories = (List<Category>) redisTemplate.opsForValue().get(ALL_CATEGORIES_CACHE_KEY);
+        
+        if (categories != null) {
+            return categories;
+        }
+        
+        // 缓存未命中，查询数据库
         // 按照排序字段排序
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByAsc(Category::getParentId)
                 .orderByAsc(Category::getSort);
-        return list(queryWrapper);
+        categories = list(queryWrapper);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(ALL_CATEGORIES_CACHE_KEY, categories, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return categories;
     }
 
     @Override
     public Category getCategoryDetail(Integer categoryId) {
-        Category category = getById(categoryId);
+        // 先从缓存获取
+        String cacheKey = CATEGORY_CACHE_PREFIX + categoryId;
+        Category category = (Category) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (category != null) {
+            return category;
+        }
+        
+        // 缓存未命中，查询数据库
+        category = getById(categoryId);
         if (category == null) {
             throw new BusinessException("分类不存在");
         }
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, category, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
         return category;
     }
 
     @Override
     public List<Category> getSubCategories(Integer parentId) {
+        // 先从缓存获取
+        String cacheKey = SUB_CATEGORIES_CACHE_PREFIX + parentId;
+        List<Category> subCategories = (List<Category>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (subCategories != null) {
+            return subCategories;
+        }
+        
+        // 缓存未命中，查询数据库
         // 查询指定父分类下的子分类
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getParentId, parentId)
                 .orderByAsc(Category::getSort);
-        return list(queryWrapper);
+        subCategories = list(queryWrapper);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, subCategories, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return subCategories;
     }
 
     @Override
     public List<Map<String, Object>> getCategoryTree() {
+        // 先从缓存获取
+        List<Map<String, Object>> categoryTree = (List<Map<String, Object>>) redisTemplate.opsForValue().get(CATEGORY_TREE_CACHE_KEY);
+        
+        if (categoryTree != null) {
+            return categoryTree;
+        }
+        
+        // 缓存未命中，构建分类树
         // 获取所有分类
         List<Category> allCategories = getAllCategories();
 
@@ -71,8 +130,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         // 构建分类树
         List<CategoryVO> rootCategories = buildCategoryTree(categoryVOList);
 
-        // 转换为Map格式返回
-        return convertToMap(rootCategories);
+        // 转换为Map格式
+        categoryTree = convertToMap(rootCategories);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(CATEGORY_TREE_CACHE_KEY, categoryTree, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return categoryTree;
     }
 
     @Override
@@ -98,6 +162,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
 
         // 保存分类
         save(category);
+        
+        // 清除相关缓存
+        clearCategoryCache(category.getParentId());
+        
         return category.getId();
     }
 
@@ -131,6 +199,17 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
 
         // 更新分类
         updateById(category);
+        
+        // 更新缓存
+        String cacheKey = CATEGORY_CACHE_PREFIX + category.getId();
+        redisTemplate.opsForValue().set(cacheKey, category, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        // 清除相关缓存
+        clearCategoryCache(existingCategory.getParentId());
+        if (existingCategory.getParentId() != category.getParentId()) {
+            // 如果更改了父分类，则清除原父分类和新父分类的子分类缓存
+            clearCategoryCache(category.getParentId());
+        }
     }
 
     @Override
@@ -161,6 +240,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
 
         // 删除分类
         removeById(categoryId);
+        
+        // 删除缓存
+        String cacheKey = CATEGORY_CACHE_PREFIX + categoryId;
+        redisTemplate.delete(cacheKey);
+        
+        // 清除相关缓存
+        clearCategoryCache(category.getParentId());
     }
 
     @Override
@@ -257,6 +343,21 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category>
         }
 
         return result;
+    }
+    
+    /**
+     * 清除分类相关缓存
+     * 
+     * @param parentId 父分类ID
+     */
+    private void clearCategoryCache(Integer parentId) {
+        // 清除全部分类缓存
+        redisTemplate.delete(ALL_CATEGORIES_CACHE_KEY);
+        // 清除分类树缓存
+        redisTemplate.delete(CATEGORY_TREE_CACHE_KEY);
+        // 清除父分类的子分类缓存
+        String subCategoriesCacheKey = SUB_CATEGORIES_CACHE_PREFIX + parentId;
+        redisTemplate.delete(subCategoriesCacheKey);
     }
 }
 

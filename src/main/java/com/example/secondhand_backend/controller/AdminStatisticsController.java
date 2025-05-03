@@ -39,7 +39,7 @@ public class AdminStatisticsController {
     }
     
     @GetMapping("/today")
-    @Operation(summary = "获取今日数据统计", description = "获取今日新增用户数、今日新增商品数、今日新增订单数")
+    @Operation(summary = "获取今日数据统计", description = "获取今日新增用户数、今日新增商品数、今日新增订单数、今日交易额")
     public Result<Map<String, Object>> getTodayStatistics() {
         // 验证是否为管理员
         Integer userRole = UserUtils.getCurrentUserRole();

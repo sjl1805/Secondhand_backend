@@ -16,11 +16,14 @@ import com.example.secondhand_backend.utils.CaptchaUtils;
 import com.example.secondhand_backend.utils.MD5Utils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author 28619
@@ -32,12 +35,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private CaptchaUtils captchaUtils;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    // 缓存相关常量
+    private static final String USER_CACHE_PREFIX = "user:info:";
+    private static final String USER_BY_USERNAME_CACHE_PREFIX = "user:username:";
+    private static final String USER_LIST_CACHE_PREFIX = "user:list:";
+    private static final String ADMIN_LIST_CACHE_KEY = "user:admin:list";
+    private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
 
     @Override
     public User getByUsername(String username) {
+        // 尝试从缓存获取
+        String cacheKey = USER_BY_USERNAME_CACHE_PREFIX + username;
+        User user = (User) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (user != null) {
+            return user;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
-        return getOne(wrapper);
+        user = getOne(wrapper);
+        
+        // 存入缓存
+        if (user != null) {
+            redisTemplate.opsForValue().set(cacheKey, user, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+            // 同时更新用户ID缓存
+            redisTemplate.opsForValue().set(USER_CACHE_PREFIX + user.getId(), user, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        }
+        
+        return user;
     }
 
     @Override
@@ -82,11 +113,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 保存用户
         save(user);
+        
+        // 清除用户列表缓存
+        clearUserListCache();
+        
         return user;
     }
 
     @Override
     public boolean checkUsernameExists(String username) {
+        // 尝试从缓存获取
+        String cacheKey = USER_BY_USERNAME_CACHE_PREFIX + username;
+        User user = (User) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (user != null) {
+            return true;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
         return count(wrapper) > 0;
@@ -94,10 +138,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User getUserInfo(Long userId) {
-        User user = getById(userId);
+        // 尝试从缓存获取
+        String cacheKey = USER_CACHE_PREFIX + userId;
+        User user = (User) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (user != null) {
+            return user;
+        }
+        
+        // 缓存未命中，查询数据库
+        user = getById(userId);
         if (user == null) {
             throw BusinessException.usernameOrPasswordError();
         }
+        
+        // 存入缓存
+        redisTemplate.opsForValue().set(cacheKey, user, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
         return user;
     }
 
@@ -111,6 +168,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         BeanUtils.copyProperties(userInfoDTO, user);
         updateById(user);
+        
+        // 更新缓存
+        updateUserCache(user);
     }
 
     @Override
@@ -135,10 +195,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 更新密码
         user.setPassword(MD5Utils.encrypt(passwordUpdateDTO.getNewPassword()));
         updateById(user);
+        
+        // 更新缓存
+        updateUserCache(user);
     }
 
     @Override
     public IPage<User> getUserList(int page, int size, String keyword) {
+        // 尝试从缓存获取
+        String cacheKey = USER_LIST_CACHE_PREFIX + page + ":" + size + ":" + (keyword == null ? "" : keyword);
+        IPage<User> userPage = (IPage<User>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (userPage != null) {
+            return userPage;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
 
         // 只查询未删除的用户
@@ -161,18 +233,36 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderByDesc(User::getCreateTime);
 
         // 创建分页对象
-        Page<User> userPage = new Page<>(page, size);
+        Page<User> pageParam = new Page<>(page, size);
 
         // 执行分页查询
-        return page(userPage, queryWrapper);
+        userPage = page(pageParam, queryWrapper);
+        
+        // 存入缓存，分页数据变化较快，设置较短的过期时间
+        redisTemplate.opsForValue().set(cacheKey, userPage, 1, TimeUnit.HOURS);
+        
+        return userPage;
     }
 
     @Override
     public User getSellerInfo(Long sellerId) {
-        User seller = getById(sellerId);
+        // 尝试从缓存获取
+        String cacheKey = USER_CACHE_PREFIX + sellerId;
+        User seller = (User) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (seller != null && seller.getDeleted() == 0) {
+            return seller;
+        }
+        
+        // 缓存未命中或已删除，查询数据库
+        seller = getById(sellerId);
         if (seller == null || seller.getDeleted() == 1) {
             throw new BusinessException("卖家不存在或已删除");
         }
+        
+        // 存入缓存
+        redisTemplate.opsForValue().set(cacheKey, seller, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
         return seller;
     }
 
@@ -206,6 +296,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 保存更新
         updateById(user);
+        
+        // 更新缓存
+        updateUserCache(user);
+        
+        // 如果角色变为管理员或从管理员变为普通用户，清除管理员列表缓存
+        if (role != null && (role == 9 || user.getRole() == 9)) {
+            redisTemplate.delete(ADMIN_LIST_CACHE_KEY);
+        }
     }
 
     @Override
@@ -230,6 +328,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 逻辑删除用户
         user.setDeleted(1);
         updateById(user);
+        
+        // 更新缓存
+        updateUserCache(user);
+        
+        // 清除用户列表缓存
+        clearUserListCache();
+        
+        // 如果是管理员，清除管理员列表缓存
+        if (user.getRole() == 9) {
+            redisTemplate.delete(ADMIN_LIST_CACHE_KEY);
+        }
     }
 
     @Override
@@ -254,15 +363,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 更新密码
         user.setPassword(MD5Utils.encrypt(newPassword));
         updateById(user);
+        
+        // 更新缓存
+        updateUserCache(user);
     }
 
     @Override
     public List<User> getAdminList() {
+        // 尝试从缓存获取
+        List<User> adminList = (List<User>) redisTemplate.opsForValue().get(ADMIN_LIST_CACHE_KEY);
+        
+        if (adminList != null) {
+            return adminList;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getRole, 9)  // 角色为管理员
                 .eq(User::getDeleted, 0);  // 未删除
 
-        return list(queryWrapper);
+        adminList = list(queryWrapper);
+        
+        // 存入缓存
+        redisTemplate.opsForValue().set(ADMIN_LIST_CACHE_KEY, adminList, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return adminList;
     }
 
     @Override
@@ -271,12 +396,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return false;
         }
 
-        User user = getById(userId);
+        // 从缓存获取用户信息
+        User user = getUserInfo(userId);
         return user != null && user.getRole() == 9 && user.getDeleted() == 0;
     }
 
     @Override
     public List<User> searchUsers(String keyword) {
+        // 此方法返回空列表，未实现实际功能
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.and(wrapper ->
                 wrapper.like(User::getUsername, keyword)
@@ -285,6 +412,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         .or()
         );
         return List.of();
+    }
+    
+    /**
+     * 更新用户缓存
+     * @param user 用户对象
+     */
+    private void updateUserCache(User user) {
+        if (user != null) {
+            // 更新用户ID缓存
+            String userIdCacheKey = USER_CACHE_PREFIX + user.getId();
+            redisTemplate.opsForValue().set(userIdCacheKey, user, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+            
+            // 更新用户名缓存
+            String usernameCacheKey = USER_BY_USERNAME_CACHE_PREFIX + user.getUsername();
+            redisTemplate.opsForValue().set(usernameCacheKey, user, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        }
+    }
+    
+    /**
+     * 清除用户列表缓存
+     */
+    private void clearUserListCache() {
+        Set<String> keys = redisTemplate.keys(USER_LIST_CACHE_PREFIX + "*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+    
+    /**
+     * 刷新所有用户缓存
+     */
+    public void refreshAllUserCache() {
+        // 清除所有用户相关缓存
+        Set<String> userKeys = redisTemplate.keys("user:*");
+        if (userKeys != null && !userKeys.isEmpty()) {
+            redisTemplate.delete(userKeys);
+        }
     }
 }
 

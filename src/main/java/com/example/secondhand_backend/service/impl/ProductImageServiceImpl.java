@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.secondhand_backend.mapper.ProductImageMapper;
 import com.example.secondhand_backend.model.entity.ProductImage;
 import com.example.secondhand_backend.service.ProductImageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +23,12 @@ import java.util.stream.Collectors;
 @Service
 public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, ProductImage>
         implements ProductImageService {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String PRODUCT_IMAGES_CACHE_PREFIX = "product:images:";
+    private static final long CACHE_EXPIRE_TIME = 24; // 缓存过期时间（小时）
 
     @Override
     @Transactional
@@ -42,18 +51,38 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         }
 
         saveBatch(imageList);
+        
+        // 更新缓存
+        String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
+        redisTemplate.opsForValue().set(cacheKey, imageUrls, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
     }
 
     @Override
     public List<String> getProductImages(Long productId) {
+        // 从缓存获取
+        String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
+        List<String> imageUrls = (List<String>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (imageUrls != null) {
+            return imageUrls;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<ProductImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductImage::getProductId, productId)
                 .orderByAsc(ProductImage::getSort);
 
         List<ProductImage> imageList = list(queryWrapper);
-        return imageList.stream()
+        imageUrls = imageList.stream()
                 .map(ProductImage::getImageUrl)
                 .collect(Collectors.toList());
+        
+        // 将结果存入缓存
+        if (!imageUrls.isEmpty()) {
+            redisTemplate.opsForValue().set(cacheKey, imageUrls, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        }
+        
+        return imageUrls;
     }
 
     @Override
@@ -61,6 +90,10 @@ public class ProductImageServiceImpl extends ServiceImpl<ProductImageMapper, Pro
         LambdaQueryWrapper<ProductImage> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductImage::getProductId, productId);
         remove(queryWrapper);
+        
+        // 删除缓存
+        String cacheKey = PRODUCT_IMAGES_CACHE_PREFIX + productId;
+        redisTemplate.delete(cacheKey);
     }
 }
 

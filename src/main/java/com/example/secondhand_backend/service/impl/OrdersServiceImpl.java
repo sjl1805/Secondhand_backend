@@ -24,6 +24,7 @@ import com.example.secondhand_backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,7 @@ import org.springframework.util.StringUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +62,17 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
+    private static final String ORDER_CACHE_PREFIX = "order:";
+    private static final String ORDER_BY_NO_CACHE_PREFIX = "order:no:";
+    private static final String BUYER_ORDERS_CACHE_PREFIX = "order:buyer:";
+    private static final String SELLER_ORDERS_CACHE_PREFIX = "order:seller:";
+    private static final String ADMIN_ORDERS_CACHE_PREFIX = "order:admin:";
+    private static final String PAYMENT_STATUS_CACHE_PREFIX = "order:payment:";
+    private static final long CACHE_EXPIRE_TIME = 12; // 缓存过期时间（小时）
 
     @Override
     @Transactional
@@ -107,6 +120,15 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
 
     @Override
     public OrderVO getOrderDetail(Long orderId, Long userId) {
+        // 从缓存获取
+        String cacheKey = ORDER_CACHE_PREFIX + orderId + ":" + userId;
+        OrderVO orderVO = (OrderVO) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (orderVO != null) {
+            return orderVO;
+        }
+        
+        // 缓存未命中，查询数据库
         // 获取订单
         Orders order = getById(orderId);
         if (order == null || order.getDeleted() == 1) {
@@ -118,8 +140,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             throw new BusinessException("无权查看该订单");
         }
 
-        // 转换为订单VO并返回
-        return convertToOrderVO(order);
+        // 转换为订单VO
+        orderVO = convertToOrderVO(order);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, orderVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return orderVO;
     }
 
     @Override
@@ -157,6 +184,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 更新订单状态
         order.setStatus(status);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
 
         // 如果订单状态变为已取消，恢复商品状态为在售
         if (status == 5) {
@@ -190,6 +220,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 更新订单状态为已取消
         order.setStatus(5);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
 
         // 恢复商品状态为在售
         Product product = productMapper.selectById(order.getProductId());
@@ -201,12 +234,40 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
 
     @Override
     public IPage<OrderVO> getBuyerOrders(Long buyerId, Integer status, int page, int size) {
-        return getOrdersByRole(buyerId, status, page, size, true);
+        // 从缓存获取
+        String cacheKey = BUYER_ORDERS_CACHE_PREFIX + buyerId + ":" + (status == null ? "all" : status) + ":" + page + ":" + size;
+        IPage<OrderVO> orderVOPage = (IPage<OrderVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (orderVOPage != null) {
+            return orderVOPage;
+        }
+        
+        // 缓存未命中，查询数据库
+        orderVOPage = getOrdersByRole(buyerId, status, page, size, true);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, orderVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return orderVOPage;
     }
 
     @Override
     public IPage<OrderVO> getSellerOrders(Long sellerId, Integer status, int page, int size) {
-        return getOrdersByRole(sellerId, status, page, size, false);
+        // 从缓存获取
+        String cacheKey = SELLER_ORDERS_CACHE_PREFIX + sellerId + ":" + (status == null ? "all" : status) + ":" + page + ":" + size;
+        IPage<OrderVO> orderVOPage = (IPage<OrderVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (orderVOPage != null) {
+            return orderVOPage;
+        }
+        
+        // 缓存未命中，查询数据库
+        orderVOPage = getOrdersByRole(sellerId, status, page, size, false);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, orderVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return orderVOPage;
     }
 
     @Override
@@ -231,6 +292,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 更新订单状态为待收货
         order.setStatus(3);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
     }
 
     @Override
@@ -255,20 +319,63 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 更新订单状态为已完成
         order.setStatus(4);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
     }
 
     @Override
     public Orders getByOrderNo(String orderNo) {
+        // 从缓存获取
+        String cacheKey = ORDER_BY_NO_CACHE_PREFIX + orderNo;
+        Orders order = (Orders) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (order != null) {
+            return order;
+        }
+        
+        // 缓存未命中，查询数据库
         LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Orders::getOrderNo, orderNo)
                 .eq(Orders::getDeleted, 0);
 
-        return getOne(queryWrapper);
+        order = getOne(queryWrapper);
+        
+        // 将结果存入缓存
+        if (order != null) {
+            redisTemplate.opsForValue().set(cacheKey, order, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        }
+        
+        return order;
     }
 
     @Override
     public IPage<OrderVO> adminGetOrderList(int page, int size, Long buyerId, Long sellerId,
                                             Integer status, String orderNo, Long operatorId) {
+        // 生成缓存Key
+        StringBuilder cacheKeyBuilder = new StringBuilder(ADMIN_ORDERS_CACHE_PREFIX);
+        cacheKeyBuilder.append(page).append(":")
+                .append(size).append(":")
+                .append(buyerId == null ? "null" : buyerId).append(":")
+                .append(sellerId == null ? "null" : sellerId).append(":")
+                .append(status == null ? "null" : status).append(":");
+        
+        if (StringUtils.hasText(orderNo)) {
+            cacheKeyBuilder.append(orderNo);
+        } else {
+            cacheKeyBuilder.append("null");
+        }
+        
+        String cacheKey = cacheKeyBuilder.toString();
+        
+        // 从缓存获取
+        IPage<OrderVO> orderVOPage = (IPage<OrderVO>) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (orderVOPage != null) {
+            return orderVOPage;
+        }
+        
+        // 缓存未命中，查询数据库
         // 验证管理员权限
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
@@ -308,18 +415,30 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 .collect(Collectors.toList());
 
         // 创建新的分页对象
-        Page<OrderVO> orderVOPage = new Page<>();
+        orderVOPage = new Page<>();
         orderVOPage.setCurrent(result.getCurrent());
         orderVOPage.setSize(result.getSize());
         orderVOPage.setTotal(result.getTotal());
         orderVOPage.setPages(result.getPages());
         orderVOPage.setRecords(orderVOList);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, orderVOPage, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
         return orderVOPage;
     }
 
     @Override
     public OrderVO adminGetOrderDetail(Long orderId, Long operatorId) {
+        // 从缓存获取
+        String cacheKey = ORDER_CACHE_PREFIX + orderId + ":admin:" + operatorId;
+        OrderVO orderVO = (OrderVO) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (orderVO != null) {
+            return orderVO;
+        }
+        
+        // 缓存未命中，查询数据库
         // 验证管理员权限
         if (!isAdmin(operatorId)) {
             throw new BusinessException("无权限执行此操作，需要管理员权限");
@@ -331,8 +450,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
             throw new BusinessException("订单不存在或已删除");
         }
 
-        // 转换为订单VO并返回
-        return convertToOrderVO(order);
+        // 转换为订单VO
+        orderVO = convertToOrderVO(order);
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, orderVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
+        
+        return orderVO;
     }
 
     @Override
@@ -357,6 +481,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 管理员可以将订单设置为任何状态
         order.setStatus(status);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
 
         // 如果订单状态变为已取消，恢复商品状态为在售
         if (status == 5) {
@@ -385,6 +512,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         // 逻辑删除订单
         order.setDeleted(1);
         updateById(order);
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, order.getBuyerId(), order.getSellerId());
 
         // 如果订单状态为待付款或待发货，恢复商品状态为在售
         if (order.getStatus() == 1 || order.getStatus() == 2) {
@@ -551,6 +681,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 .paymentTime(order.getPaymentTime())
                 .transactionNo(order.getTransactionNo())
                 .build();
+        
+        // 清除相关缓存
+        clearOrderCache(orderId, userId, order.getSellerId());
 
         return resultVO;
     }
@@ -564,6 +697,15 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
      */
     @Override
     public PaymentResultVO getPaymentStatus(Long orderId, Long userId) {
+        // 从缓存获取
+        String cacheKey = PAYMENT_STATUS_CACHE_PREFIX + orderId + ":" + userId;
+        PaymentResultVO resultVO = (PaymentResultVO) redisTemplate.opsForValue().get(cacheKey);
+        
+        if (resultVO != null) {
+            return resultVO;
+        }
+        
+        // 缓存未命中，查询数据库
         // 1. 查询订单
         Orders order = getById(orderId);
         if (order == null) {
@@ -576,7 +718,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         }
 
         // 3. 构建支付结果
-        PaymentResultVO resultVO = PaymentResultVO.builder()
+        resultVO = PaymentResultVO.builder()
                 .orderId(order.getId())
                 .orderNo(order.getOrderNo())
                 .paymentStatus(order.getPaymentStatus())
@@ -587,6 +729,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
                 .paymentTime(order.getPaymentTime())
                 .transactionNo(order.getTransactionNo())
                 .build();
+        
+        // 将结果存入缓存
+        redisTemplate.opsForValue().set(cacheKey, resultVO, CACHE_EXPIRE_TIME, TimeUnit.HOURS);
 
         return resultVO;
     }
@@ -777,6 +922,46 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     private String generateOrderNo() {
         // 使用时间戳和UUID生成唯一订单号
         return System.currentTimeMillis() + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+    }
+
+    /**
+     * 清除相关缓存
+     *
+     * @param orderId 订单ID
+     * @param buyerId 买家ID
+     * @param sellerId 卖家ID
+     */
+    private void clearOrderCache(Long orderId, Long buyerId, Long sellerId) {
+        // 清除订单详情缓存
+        String buyerOrderCacheKey = ORDER_CACHE_PREFIX + orderId + ":" + buyerId;
+        String sellerOrderCacheKey = ORDER_CACHE_PREFIX + orderId + ":" + sellerId;
+        String adminOrderCacheKey = ORDER_CACHE_PREFIX + orderId + ":admin:*";
+        redisTemplate.delete(buyerOrderCacheKey);
+        redisTemplate.delete(sellerOrderCacheKey);
+        redisTemplate.delete(redisTemplate.keys(adminOrderCacheKey));
+        
+        // 清除订单号缓存
+        Orders order = getById(orderId);
+        if (order != null && order.getOrderNo() != null) {
+            String orderNoCacheKey = ORDER_BY_NO_CACHE_PREFIX + order.getOrderNo();
+            redisTemplate.delete(orderNoCacheKey);
+        }
+        
+        // 清除买家订单列表缓存（模糊删除）
+        String buyerOrdersPattern = BUYER_ORDERS_CACHE_PREFIX + buyerId + "*";
+        redisTemplate.delete(redisTemplate.keys(buyerOrdersPattern));
+        
+        // 清除卖家订单列表缓存（模糊删除）
+        String sellerOrdersPattern = SELLER_ORDERS_CACHE_PREFIX + sellerId + "*";
+        redisTemplate.delete(redisTemplate.keys(sellerOrdersPattern));
+        
+        // 清除管理员订单列表缓存（模糊删除）
+        String adminOrdersPattern = ADMIN_ORDERS_CACHE_PREFIX + "*";
+        redisTemplate.delete(redisTemplate.keys(adminOrdersPattern));
+        
+        // 清除支付状态缓存
+        String paymentStatusCacheKey = PAYMENT_STATUS_CACHE_PREFIX + orderId + ":" + buyerId;
+        redisTemplate.delete(paymentStatusCacheKey);
     }
 }
 

@@ -23,7 +23,7 @@ public interface ProductMapper extends BaseMapper<Product> {
      * 获取商品状态统计
      * @return 包含商品状态和对应数量的列表
      */
-    @Select("SELECT status, COUNT(id) as count FROM product WHERE deleted = 0 GROUP BY status")
+    @Select("SELECT CAST(status AS SIGNED) as status, COUNT(id) as count FROM product WHERE deleted = 0 GROUP BY status")
     List<Map<String, Object>> getProductStatusStatistics();
     
     /**
@@ -55,15 +55,9 @@ public interface ProductMapper extends BaseMapper<Product> {
      * @param productId 商品ID
      * @return 商品评分统计数据
      */
-    @Select("SELECT " +
-            "SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star, " +
-            "SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_stars, " +
-            "SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_stars, " +
-            "SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_stars, " +
-            "SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_stars " +
-            "FROM product " +
-            "WHERE id = #{productId} AND deleted = 0")
+    @Select("SELECT rating as rate, COUNT(*) as count FROM comment WHERE product_id = #{productId} AND deleted = 0 GROUP BY rating")
     Map<String, Integer> getProductRatingStatistics(@Param("productId") Long productId);
+
 }
 
 

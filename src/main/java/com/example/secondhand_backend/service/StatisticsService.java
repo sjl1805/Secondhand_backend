@@ -17,7 +17,7 @@ public interface StatisticsService {
 
     /**
      * 获取今日数据统计
-     * @return 包含今日新增用户数、今日新增商品数、今日新增订单数的Map
+     * @return 包含今日新增用户数、今日新增商品数、今日新增订单数、今日交易额的Map
      */
     Map<String, Object> getTodayStatistics();
 
@@ -96,4 +96,5 @@ public interface StatisticsService {
      * @return 商品评分统计数据
      */
     Map<String, Integer> getProductRatingStatistics(Long productId);
+
 } 

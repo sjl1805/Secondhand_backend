@@ -24,7 +24,7 @@ public interface OrdersMapper extends BaseMapper<Orders> {
      * 获取订单状态统计
      * @return 包含订单状态和对应数量的列表
      */
-    @Select("SELECT status, COUNT(id) as count FROM orders WHERE deleted = 0 GROUP BY status")
+    @Select("SELECT CAST(status AS SIGNED) as status, COUNT(id) as count FROM orders WHERE deleted = 0 GROUP BY status")
     List<Map<String, Object>> getOrderStatusStatistics();
     
     /**
@@ -90,6 +90,18 @@ public interface OrdersMapper extends BaseMapper<Orders> {
      */
     @Select("SELECT SUM(price) FROM orders WHERE deleted = 0 AND status = 4")
     BigDecimal calculateTotalTransactionAmount();
+    
+    /**
+     * 计算今日交易额
+     * @param startTime 今日开始时间
+     * @param endTime 今日结束时间
+     * @return 今日交易额
+     */
+    @Select("SELECT SUM(price) FROM orders WHERE deleted = 0 AND status = 4 " +
+            "AND create_time BETWEEN #{startTime} AND #{endTime}")
+    BigDecimal calculateTodayTransactionAmount(
+            @Param("startTime") Date startTime,
+            @Param("endTime") Date endTime);
     
     /**
      * 获取用户活跃度统计数据(买家部分)

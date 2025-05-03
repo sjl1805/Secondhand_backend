@@ -45,6 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/product/hot",
                         "/product/advanced-search",
                         "/product/{id}/view",
+                        "/product/{id}/rating",
 
                         // 文件公开访问路径
                         "/file/preview/**",
