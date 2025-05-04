@@ -50,17 +50,17 @@
         SELECT u.id,
                u.nickname,
                u.avatar,
-               (SELECT COUNT(*) FROM product p WHERE p.user_id = u.id AND p.deleted = 0)                       as product_count,
+               (SELECT COUNT(*) FROM product p WHERE p.user_id = u.id AND p.deleted = 0) as product_count,
                (SELECT COUNT(*)
                 FROM orders o
                 WHERE o.seller_id = u.id
                   AND o.status = 4
-                  AND o.deleted = 0)                                                                           as completed_order_count,
+                  AND o.deleted = 0)                                                     as completed_order_count,
                (SELECT SUM(o.price)
                 FROM orders o
                 WHERE o.seller_id = u.id
                   AND o.status = 4
-                  AND o.deleted = 0)                                                                           as total_sales
+                  AND o.deleted = 0)                                                     as total_sales
         FROM user u
         WHERE u.deleted = 0
         HAVING product_count > 0

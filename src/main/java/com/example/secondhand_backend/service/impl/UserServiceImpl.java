@@ -401,15 +401,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public List<User> searchUsers(String keyword) {
-        // 此方法返回空列表，未实现实际功能
+        // 如果关键词为空，返回空列表
+        if (!StringUtils.hasText(keyword)) {
+            return List.of();
+        }
+
+        // 创建查询条件
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+
+        // 添加查询条件：用户名、昵称、电话或邮箱包含关键词，且未被删除
         queryWrapper.and(wrapper ->
                 wrapper.like(User::getUsername, keyword)
                         .or()
                         .like(User::getNickname, keyword)
                         .or()
-        );
-        return List.of();
+                        .like(User::getPhone, keyword)
+                        .or()
+                        .like(User::getEmail, keyword)
+        ).eq(User::getDeleted, 0);
+
+        // 限制返回条数，避免返回过多数据
+        queryWrapper.last("LIMIT 20");
+
+        // 执行查询并返回结果
+        return list(queryWrapper);
     }
 
     /**

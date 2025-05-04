@@ -135,8 +135,14 @@ public class AdminUserController {
         return Result.success(adminList);
     }
 
-    @GetMapping("user/search")
+    @GetMapping("/user/search")
+    @Operation(summary = "搜索用户", description = "根据关键词搜索用户")
     public Result<List<User>> searchUsers(@RequestParam("keyword") String keyword) {
+        // 验证当前用户是否为管理员
+        if (!validateAdminRole()) {
+            return Result.error("无权访问此接口，需要管理员权限");
+        }
+
         List<User> users = userService.searchUsers(keyword);
         return Result.success(users);
     }
